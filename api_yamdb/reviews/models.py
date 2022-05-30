@@ -17,8 +17,6 @@ class Category(models.Model):
 
 
 class Title(models.Model):
-    # field rating - ?
-
     name = models.CharField('Название', max_length=150)
     year = models.DateField('Год выхода')
     description = models.TextField('Описание')
