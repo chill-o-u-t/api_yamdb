@@ -5,12 +5,16 @@ from core.models import SortModel
 User = get_user_model()
 
 
-class Genre(SortModel):
-    pass
+# class Genre(SortModel):
+#     pass
 
 
-class Category(SortModel):
-    pass
+# class Category(SortModel):
+#     pass
+
+
+# class Me(models.Model):
+#     pass
 
 
 class Title(models.Model):
@@ -18,14 +22,14 @@ class Title(models.Model):
     year = models.IntegerField('Год выхода')
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
-        Genre,
+       #  Genre,
         verbose_name='Жанр',
         related_name='genre',
         blank=True,
         through='GenreTitle'
     )
     category = models.ForeignKey(
-        Category,
+        # Category,
         verbose_name='Категория',
         on_delete=models.PROTECT,
         related_name='category',
