@@ -1,13 +1,11 @@
 from rest_framework.routers import SimpleRouter
 from django.urls import path, include
 
-from .views import GenreViewSet, CategoryViewSet, TitleViewSet
+from .views import ReviewViewSet
 
 
-router = SimpleRouter()
-router.register('genres', GenreViewSet, basename='genres')
-router.register('categories', CategoryViewSet, basename='categories')
-router.register('titles', TitleViewSet, basename='titles')
+router_v1 = SimpleRouter()
+router_v1.register('rewiews', ReviewViewSet, basename='rewiews')
 
 urlpatterns = [
     path('', include(router.urls)),
