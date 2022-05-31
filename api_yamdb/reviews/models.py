@@ -2,19 +2,12 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from core.models import SortModel
 
-User = get_user_model()
+from core.models import SortModel, EntryModel
 
+Me = get_user_model()
 
-# class Genre(SortModel):
-#     pass
-
-
-# class Category(SortModel):
-#     pass
-
-
-# class Me(models.Model):
-#     pass
+class Genre(SortModel):
+    pass
 
 
 class Title(models.Model):
@@ -22,14 +15,14 @@ class Title(models.Model):
     year = models.IntegerField('Год выхода')
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
-       #  Genre,
+        Genre,
         verbose_name='Жанр',
         related_name='genre',
         blank=True,
         through='GenreTitle'
     )
     category = models.ForeignKey(
-        # Category,
+        Category,
         verbose_name='Категория',
         on_delete=models.PROTECT,
         related_name='category',
@@ -46,9 +39,8 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-class Review(models.Model):
-    # field score - ?
-    # score = models.???
+class Review(EntryModel):
+    score = models.IntegerField(choices=(range(1, 11)))
     title = models.ForeignKey(
         Title,
         verbose_name='Название',
@@ -56,41 +48,11 @@ class Review(models.Model):
         related_name='review'
     )
 
-    # отнаследовать
-    pub_date = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True,
-    )
-    text = models.TextField(
-        'Текст',
-    )
-    author = models.ForeignKey(
-        User,
-        verbose_name='Автор',
-        on_delete=models.CASCADE,
-        related_name='review_author'
-    )
 
-
-class Comment(models.Model):
+class Comment(EntryModel):
     review = models.ForeignKey(
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
         related_name='review'
-    )
-
-    # отнаследовать
-    pub_date = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True,
-    )
-    text = models.TextField(
-        'Текст',
-    )
-    author = models.ForeignKey(
-        User,
-        verbose_name='Автор',
-        on_delete=models.CASCADE,
-        related_name='comment_author'
     )
