@@ -1,16 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from core.models import SortModel
 
 from core.models import SortModel, EntryModel
 
 Me = get_user_model()
 
-
 class Genre(SortModel):
-    pass
-
-
-class Category(SortModel):
     pass
 
 
