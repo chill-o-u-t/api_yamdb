@@ -2,11 +2,14 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from core.models import SortModel
 
-from core.models import SortModel, EntryModel
+User = get_user_model()
 
-Me = get_user_model()
 
 class Genre(SortModel):
+    pass
+
+
+class Category(SortModel):
     pass
 
 
@@ -39,8 +42,9 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-class Review(EntryModel):
-    score = models.IntegerField(choices=(range(1, 11)))
+class Review(models.Model):
+    # field score - ?
+    # score = models.???
     title = models.ForeignKey(
         Title,
         verbose_name='Название',
@@ -48,11 +52,41 @@ class Review(EntryModel):
         related_name='review'
     )
 
+    # отнаследовать
+    pub_date = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+    text = models.TextField(
+        'Текст',
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name='review_author'
+    )
 
-class Comment(EntryModel):
+
+class Comment(models.Model):
     review = models.ForeignKey(
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
         related_name='review'
+    )
+
+    # отнаследовать
+    pub_date = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+    text = models.TextField(
+        'Текст',
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name='comment_author'
     )
