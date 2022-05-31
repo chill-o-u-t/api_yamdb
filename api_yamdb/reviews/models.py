@@ -1,19 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from core.models import  SortModel
 
 User = get_user_model()
-
-
-class Genre(models.Model):
-    # отнаследовать
-    name = models.CharField('Жанр', max_length=150, unique=True)
-    slug = models.SlugField('Путь', max_length=150, unique=True)
-
-
-class Category(models.Model):
-    # отнаследовать
-    name = models.CharField('Категория', max_length=150, unique=True)
-    slug = models.SlugField('Путь', max_length=150, unique=True)
+   
+class Genre(SortModel):
+    pass
+    
+class Category(SortModel):
+    pass
 
 
 class Title(models.Model):
@@ -23,14 +18,18 @@ class Title(models.Model):
     genre = models.ForeignKey(
         Genre,
         verbose_name='Жанр',
-        on_delete=models.CASCADE,
-        related_name='genre'
+        on_delete=models.SET_NULL,
+        related_name='genre',
+        blank=True,
+        null=True,
     )
     category = models.ForeignKey(
         Category,
         verbose_name='Категория',
-        on_delete=models.CASCADE,
-        related_name='category'
+        on_delete=models.SET_NULL,
+        related_name='category',
+        blank=True,
+        null=True,
     )
 
 
