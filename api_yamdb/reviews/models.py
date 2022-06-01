@@ -21,7 +21,6 @@ class Title(models.Model):
         Genre,
         verbose_name='Жанр',
         related_name='genre',
-        blank=True,
         through='GenreTitle'
     )
     category = models.ForeignKey(
@@ -29,8 +28,6 @@ class Title(models.Model):
         verbose_name='Категория',
         on_delete=models.PROTECT,
         related_name='category',
-        blank=True,
-        null=True,
     )
 
 
