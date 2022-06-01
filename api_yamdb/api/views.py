@@ -1,8 +1,11 @@
 from rest_framework import viewsets
-#from .permissions import IsAdminOrReadOnly
 
-from reviews.models import Review
+from reviews.models import Review, Comment
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    pass
+
+
+class CommentViewSet(viewsets.ModelViewSet):
     pass
