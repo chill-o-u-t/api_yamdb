@@ -3,7 +3,7 @@ from rest_framework.relations import SlugRelatedField
 import datetime
 
 
-from reviews.models import Genre, Category, Title, GenreTitle
+from reviews.models import Genre, Category, Title
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -20,9 +20,15 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True)
-    category = SlugRelatedField(slug_field='slug', read_only=True)
+class TitlePostSerializer(serializers.ModelSerializer):
+    genre = SlugRelatedField(slug_field='slug',
+                             queryset=Genre.objects.all(), many=True)
+    category = SlugRelatedField(slug_field='slug',
+                                queryset=Category.objects.all())
+
+    class Meta:
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        model = Title
 
     def validate(self, data):
         year_now = datetime.datetime.now().year
@@ -31,19 +37,13 @@ class TitleSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "year": "You can't add titles that are not release yet",
                 })
+        return super(TitlePostSerializer, self).validate(data)
 
-        return super(TitleSerializer, self).validate(data)
 
-    def create(self, validated_data):
-        genres = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
-        for genre in genres:
-            current_genre, status = Genre.objects.get(
-                **genre)
-            GenreTitle.objects.create(
-                achievement=current_genre, title=title)
-        return title
+class TitleGetSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
-        fields = ('name', 'year', 'description', 'genre', 'category')
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
         model = Title
