@@ -3,7 +3,7 @@ from rest_framework import serializers
 from api_yamdb.reviews.models import Comment, Review, Title
 
 
-class RewiewSerializer(serializers.ModelSerializer):
+class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -19,7 +19,7 @@ class RewiewSerializer(serializers.ModelSerializer):
                 author=self.context['request'].user,
                 title=get_object_or_404(
                     Title,
-                    pk=self.context['view'].kwargs.get('title_id')
+                    pk=self.context['view'].kwargs.get('titles_id')
                 )
             ).exists():
                 raise serializers.ValidationError(
