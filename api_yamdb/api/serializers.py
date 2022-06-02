@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from api_yamdb.reviews.models import Comment, Review, Title
+from reviews.models import Comment, Review, Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -13,7 +13,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
     
-    def validate_score(self, data):
+    def validate(self, data):
         if self.context['request'].method == 'POST':
             if Review.object.filter(
                 author=self.context['request'].user,

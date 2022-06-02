@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 
 from reviews.models import Review, Comment, Title
-from api_yamdb.api.serializers import (
+from .serializers import (
     CommentSerializer,
     ReviewSerializer
 )

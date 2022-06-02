@@ -1,9 +1,19 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from core.models import SortModel, EntryModel
 
-Me = get_user_model()
+CHOICES = ((i, i) for i in range(1, 11))
+
+
+class User(AbstractUser):
+    ROLES = (
+        ('a', 'administrator'),
+        ('m', 'moderator'),
+        ('u', 'user'),
+    )
+    role = models.CharField(
+        max_length=1, choices=ROLES, default='u')
 
 
 class Genre(SortModel):
@@ -44,12 +54,18 @@ class GenreTitle(models.Model):
 
 
 class Review(EntryModel):
-    score = models.IntegerField(choices=(range(1, 11)))
+    score = models.IntegerField(choices=CHOICES, null=True)
     title = models.ForeignKey(
         Title,
         verbose_name='Название',
         on_delete=models.CASCADE,
         related_name='review'
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name='review_author'
     )
 
 
@@ -59,4 +75,10 @@ class Comment(EntryModel):
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
         related_name='review'
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name='comment_author'
     )
