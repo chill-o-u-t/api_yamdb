@@ -1,11 +1,19 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 
-from reviews.models import Review, Comment, Title
-from api_yamdb.api.serializers import (
+from reviews.models import Review, Title
+from core.models import User
+from api.serializers import (
     CommentSerializer,
-    ReviewSerializer
+    ReviewSerializer,
+    AuthSerializer
 )
+
+
+class AuthViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAdminOrReadOnly]
+    queryset = User.objects.all()
+    serializer_class = AuthSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

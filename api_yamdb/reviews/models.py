@@ -1,9 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 
 from core.models import SortModel, EntryModel
-
-Me = get_user_model()
 
 
 class Genre(SortModel):
@@ -58,5 +55,5 @@ class Comment(EntryModel):
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
-        related_name='review'
+        related_name='comment'
     )

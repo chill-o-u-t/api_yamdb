@@ -1,6 +1,16 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from reviews.models import Me
+
+class User(AbstractUser):
+    ROLES = (
+        ('a', 'Administrator'),
+        ('m', 'Moderator'),
+        ('u', 'User'),
+    )
+    role = models.CharField(
+        max_length=1, choices=ROLES, default='u'
+    )
 
 
 class SortModel(models.Model):
@@ -25,10 +35,10 @@ class EntryModel(models.Model):
         'Текст',
     )
     author = models.ForeignKey(
-        Me,
+        User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='comment_author'
+        related_name='author'
     )
 
     def __str__(self):
