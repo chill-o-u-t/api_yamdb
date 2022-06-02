@@ -1,8 +1,19 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from core.models import SortModel
 
-User = get_user_model()
+from core.models import SortModel, EntryModel
+
+CHOICES = ((i, i) for i in range(1, 11))
+
+
+class User(AbstractUser):
+    ROLES = (
+        ('a', 'administrator'),
+        ('m', 'moderator'),
+        ('u', 'user'),
+    )
+    role = models.CharField(
+        max_length=1, choices=ROLES, default='u')
 
 
 class Genre(SortModel):
@@ -42,23 +53,13 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-class Review(models.Model):
-    # field score - ?
-    # score = models.???
+class Review(EntryModel):
+    score = models.IntegerField(choices=CHOICES, null=True)
     title = models.ForeignKey(
         Title,
         verbose_name='Название',
         on_delete=models.CASCADE,
         related_name='review'
-    )
-
-    # отнаследовать
-    pub_date = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True,
-    )
-    text = models.TextField(
-        'Текст',
     )
     author = models.ForeignKey(
         User,
@@ -68,21 +69,12 @@ class Review(models.Model):
     )
 
 
-class Comment(models.Model):
+class Comment(EntryModel):
     review = models.ForeignKey(
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
         related_name='review'
-    )
-
-    # отнаследовать
-    pub_date = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True,
-    )
-    text = models.TextField(
-        'Текст',
     )
     author = models.ForeignKey(
         User,
