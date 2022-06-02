@@ -1,46 +1,5 @@
 import datetime
 
-<<<<<<< HEAD
-from django.core.mail import EmailMessage
-from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
-from reviews.models import User
-
-from reviews.models import Genre, Category, Title, GenreTitle
-from .tokens import account_activation_token
-
-
-class UserSerializer(serializers.ModelSerializer):
-    password = ''
-
-    def validate(self, data):
-        if data['username'] == 'me':
-            raise serializers.ValidationError({
-                "username": "This username is restricted",
-            })
-        return data
-
-    def create(self, validated_data):
-        user, _ = User.objects.get_or_create(
-            username=validated_data.get('username'),
-            email=validated_data.get('email'),
-            password=self.password
-        )
-        mail_subject = 'Activate your account.'
-        message = f'{account_activation_token.make_token(user)}'
-        print('--confirmation_code--')
-        print(message)
-        to_email = validated_data.get('email')
-        email = EmailMessage(
-            mail_subject, message, to=[to_email]
-        )
-        # email.send()
-        return user
-
-    class Meta:
-        model = User
-        fields = ('username', 'email')
-=======
 # from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -48,7 +7,6 @@ from rest_framework.relations import SlugRelatedField
 
 from reviews.models import Comment, Review, Genre, Category, Title, User
 from .tokens import account_activation_token
->>>>>>> submaster
 
 
 class AuthSerializer(serializers.ModelSerializer):

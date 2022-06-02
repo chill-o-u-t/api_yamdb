@@ -27,8 +27,4 @@ class EntryModel(models.Model):
         return f'{self.name}'
 
     class Meta:
-<<<<<<< HEAD
         abstract = True
-=======
-        abstract = True
->>>>>>> submaster
