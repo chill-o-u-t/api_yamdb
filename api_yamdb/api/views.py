@@ -1,22 +1,76 @@
+
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, filters
 from rest_framework.response import Response
 from django.forms.models import model_to_dict
 
-from reviews.models import Genre, Category, Title
-from .serializers import GenreSerializer, CategorySerializer
-from .serializers import TitleGetSerializer, TitlePostSerializer
+from reviews.models import Review, Comment, Title, Genre, Category
+from .serializers import (
+    CommentSerializer,
+    ReviewSerializer,
+    GenreSerializer,
+    CategorySerializer,
+    TitleGetSerializer,
+    TitlePostSerializer
+)
 
 
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = ('',)
+
+    def get_title(self):
+        return get_object_or_404(
+            Title,
+            pk=self.kwargs.get('titles_id')
+        )
+
+    def get_queryset(self):
+        return self.get_title().reviews
+
+    def perform_create(self, serializer):
+        serializer.save(
+            title=self.get_title(),
+            user=self.request.user
+        )
+
+    def get_raiting(self):
+        reviews = self.get_title().reviews
+        summ_of_scores = 0
+        for review in reviews:
+            summ_of_scores += review.score
+        return summ_of_scores / reviews.count()
+     
+      
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
-
+    
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = ('',)
+
+    def get_review(self):
+        return get_object_or_404(
+            Review, title=self.kwargs.get('title')
+        )
+
+    def get_queryset(self):
+        return self.get_review().comments
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            review=self.get_review()
+        )
+        
+        
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlePostSerializer
@@ -72,3 +126,4 @@ class TitleViewSet(viewsets.ModelViewSet):
         serialized_data['genre'] = genres
 
         return Response(serialized_data)
+
