@@ -1,18 +1,26 @@
-
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, filters
-from rest_framework.response import Response
 from django.forms.models import model_to_dict
+from rest_framework import viewsets, filters
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
-from reviews.models import Review, Comment, Title, Genre, Category
+
+from reviews.models import Review, Comment, Title, Genre, Category, User
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
     GenreSerializer,
     CategorySerializer,
     TitleGetSerializer,
-    TitlePostSerializer
+    TitlePostSerializer,
+    AuthSerializer
 )
+
+
+class AuthViewSet(viewsets.ModelViewSet):
+    permission_classes = (AllowAny,)
+    queryset = User.objects.all()
+    serializer_class = AuthSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -40,13 +48,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
         for review in reviews:
             summ_of_scores += review.score
         return summ_of_scores / reviews.count()
-     
-      
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
-    
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -69,8 +77,8 @@ class CommentViewSet(viewsets.ModelViewSet):
             author=self.request.user,
             review=self.get_review()
         )
-        
-        
+
+
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlePostSerializer
@@ -126,4 +134,3 @@ class TitleViewSet(viewsets.ModelViewSet):
         serialized_data['genre'] = genres
 
         return Response(serialized_data)
-
