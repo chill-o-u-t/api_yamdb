@@ -112,6 +112,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTStatelessUserAuthentication',
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
 }
 
 SIMPLE_JWT = {
@@ -127,3 +130,5 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'ymdbadm@gmail.com'
 EMAIL_HOST_PASSWORD = 'What_ever1'
 EMAIL_PORT = 587
+
+AUTH_USER_MODEL = 'reviews.User'
