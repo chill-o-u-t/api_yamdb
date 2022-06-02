@@ -1,8 +1,16 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 from core.models import SortModel
+from django.contrib.auth.models import AbstractUser
 
-User = get_user_model()
+
+class User(AbstractUser):
+    ROLES = (
+        ('a', 'Administrator'),
+        ('m', 'Moderator'),
+        ('u', 'User'),
+    )
+    role = models.CharField(
+        max_length=1, choices=ROLES, default='u')
 
 
 class Genre(SortModel):
