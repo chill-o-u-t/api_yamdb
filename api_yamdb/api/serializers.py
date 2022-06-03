@@ -1,11 +1,20 @@
 import datetime
 
-# from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from reviews.models import Comment, Review, Genre, Category, Title, User
+from reviews.models import (
+    Comment,
+    Review,
+    Genre,
+    Category,
+    Title,
+    User,
+    UserConfirmation
+)
 from .tokens import account_activation_token
 
 
@@ -26,20 +35,45 @@ class AuthSerializer(serializers.ModelSerializer):
             email=validated_data.get('email'),
             password=self.password
         )
-        # mail_subject = 'Activate your account.'
-        message = f'{account_activation_token.make_token(user)}'
+        mail_subject = 'Activate your account.'
+        confirmation_code = f'{account_activation_token.make_token(user)}'
         print('--confirmation_code--')
-        print(message)
-        # to_email = validated_data.get('email')
-        # email = EmailMessage(
-        #     mail_subject, message, to=[to_email]
-        # )
-        # email.send()
+        print(confirmation_code)
+        to_email = validated_data.get('email')
+        email = EmailMessage(
+            mail_subject, confirmation_code, to=[to_email]
+        )
+        email.send()
+        UserConfirmation.objects.create(
+            user=user,
+            confirmation_code=confirmation_code
+        )
         return user
 
     class Meta:
         model = User
         fields = ('username', 'email')
+
+
+'''
+class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
+    password = ''
+
+    def validate(self, data):
+        data = super().validate(data)
+        if UserConfirmation.get(user=data.user).exists():
+            print(data.user)
+        data['password'] = ''
+        print(data)
+        return data
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['confirmation_code'] = ''
+        token['password'] = ''
+        return token
+'''
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -68,7 +102,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ('__all__',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -108,10 +142,6 @@ class TitlePostSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all()
     )
 
-    class Meta:
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
-        model = Title
-
     def validate(self, data):
         year_now = datetime.datetime.now().year
         if "year" in data:
@@ -120,6 +150,10 @@ class TitlePostSerializer(serializers.ModelSerializer):
                     "year": "You can't add titles that are not release yet",
                 })
         return super(TitlePostSerializer, self).validate(data)
+
+    class Meta:
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        model = Title
 
 
 class TitleGetSerializer(serializers.ModelSerializer):

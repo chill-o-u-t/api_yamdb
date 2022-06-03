@@ -1,11 +1,27 @@
 from django.shortcuts import get_object_or_404
 from django.forms.models import model_to_dict
-from rest_framework import viewsets, filters
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
 from rest_framework.response import Response
+from rest_framework import viewsets, filters
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-
-from reviews.models import Review, Comment, Title, Genre, Category, User
+from reviews.models import (
+    Review,
+    Comment,
+    Title,
+    Genre,
+    Category,
+    User,
+    UserConfirmation
+)
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -13,8 +29,41 @@ from .serializers import (
     CategorySerializer,
     TitleGetSerializer,
     TitlePostSerializer,
-    AuthSerializer
+    AuthSerializer,
 )
+from .tokens import get_tokens_for_user
+from .permissions import (
+    IsSuperUserOrReadOnly,
+    AuthorOrStaffPermission,
+    AdminPermission
+)
+
+
+@api_view(['POST'])
+@permission_classes((AllowAny, ))
+def get_token(request):
+    print(request.data)
+    for field in ('username', 'confirmation_code'):
+        if not request.data.get(field):
+            return Response(
+                {f'{field}': 'Это обязательное поле'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    user = UserConfirmation.objects.get(
+        user__username=request.data.get('username'),
+        confirmation_code=request.data.get('confirmation_code')
+    )
+    if user:
+        tokens = get_tokens_for_user(user.user)
+        user.delete()
+        return Response(
+            tokens,
+            status=status.HTTP_200_OK
+        )
+    return Response(
+        {'Пользователь не запрашивал код'},
+        status=status.HTTP_404_NOT_FOUND
+    )
 
 
 class AuthViewSet(viewsets.ModelViewSet):
@@ -23,14 +72,20 @@ class AuthViewSet(viewsets.ModelViewSet):
     serializer_class = AuthSerializer
 
 
+'''
+class UserTokenObtainPairView(TokenObtainPairView):
+    serializer_class = UserTokenObtainPairSerializer
+'''
+
+
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = ('',)
+    permission_classes = (AllowAny,)
 
     def get_title(self):
         return get_object_or_404(
             Title,
-            pk=self.kwargs.get('titles_id')
+            pk=self.kwargs.get('title_id')
         )
 
     def get_queryset(self):
@@ -53,16 +108,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = (AdminPermission,)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = (AdminPermission,)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = ('',)
+    permission_classes = (AuthorOrStaffPermission,)
 
     def get_review(self):
         return get_object_or_404(
@@ -81,6 +138,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = TitlePostSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('following__username',)
@@ -110,7 +168,7 @@ class TitleViewSet(viewsets.ModelViewSet):
             genres.append(genre_dict)
         serialized_data['genre'] = genres
 
-        return Response(serialized_data)
+        return Response(serialized_data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk, partial=False):
         instance = self.get_object()

@@ -127,8 +127,8 @@ AUTH_USER_MODEL = 'reviews.User'
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'ymdbadm@gmail.com'
-EMAIL_HOST_PASSWORD = 'What_ever1'
+EMAIL_HOST_USER = 'ivanmaximovich76@gmail.com'
+EMAIL_HOST_PASSWORD = 'lxgvuvsegsxgndom'
 EMAIL_PORT = 587
 
 AUTH_USER_MODEL = 'reviews.User'
