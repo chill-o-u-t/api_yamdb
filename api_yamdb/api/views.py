@@ -1,31 +1,22 @@
 from django.shortcuts import get_object_or_404
-from django.forms.models import model_to_dict
 from rest_framework import viewsets, filters
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+from rest_framework.permissions import  IsAuthenticated
 
 
-from reviews.models import Review, Comment, Title, Genre, Category, User
+from reviews.models import Review, Comment, Title, Genre, Category, User, UserConfirmation
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
-    GenreSerializer,
-    CategorySerializer,
-    TitleGetSerializer,
-    TitlePostSerializer,
-    AuthSerializer
 )
-
-
-class AuthViewSet(viewsets.ModelViewSet):
-    permission_classes = (AllowAny,)
-    queryset = User.objects.all()
-    serializer_class = AuthSerializer
+from .permissions import (
+    AuthorOrStaffPermission,
+)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = ('',)
+    permission_classes = (IsAuthenticated, AuthorOrStaffPermission)
+    filter_backends = (filters.SearchFilter,)
 
     def get_title(self):
         return get_object_or_404(
@@ -50,19 +41,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return summ_of_scores / reviews.count()
 
 
-class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-
-
-class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = ('',)
+    permission_classes = (AuthorOrStaffPermission, IsAuthenticated)
+    filter_backends = (filters.SearchFilter,)
 
     def get_review(self):
         return get_object_or_404(
@@ -78,59 +60,3 @@ class CommentViewSet(viewsets.ModelViewSet):
             review=self.get_review()
         )
 
-
-class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    serializer_class = TitlePostSerializer
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('following__username',)
-
-    def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
-            return TitleGetSerializer
-        return TitlePostSerializer
-
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        serialized_data = serializer.data
-        category_dict = model_to_dict(
-            Category.objects.get(slug=serialized_data['category'])
-        )
-        category_dict.pop('id')
-        serialized_data['category'] = category_dict
-
-        genres = list()
-        for genre in serialized_data['genre']:
-            genre_dict = model_to_dict(
-                Genre.objects.get(slug=genre)
-            )
-            genre_dict.pop('id')
-            genres.append(genre_dict)
-        serialized_data['genre'] = genres
-
-        return Response(serialized_data)
-
-    def update(self, request, pk, partial=False):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data,
-                                         partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        serialized_data = serializer.data
-        category_dict = model_to_dict(
-            Category.objects.get(slug=serialized_data['category'])
-        )
-        category_dict.pop('id')
-        serialized_data['category'] = category_dict
-        genres = list()
-        for genre in serialized_data['genre']:
-            genre_dict = model_to_dict(
-                Genre.objects.get(slug=genre)
-            )
-            genre_dict.pop('id')
-            genres.append(genre_dict)
-        serialized_data['genre'] = genres
-
-        return Response(serialized_data)
