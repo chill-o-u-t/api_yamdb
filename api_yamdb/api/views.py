@@ -83,7 +83,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlePostSerializer
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('following__username',)
+    search_fields = ['name', 'year', 'genre__slug', 'category__slug']
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
