@@ -49,7 +49,8 @@ def create_genre(admin_client):
     result = []
     data = {'name': 'Ужасы', 'slug': 'horror'}
     result.append(data)
-    admin_client.post('/api/v1/genres/', data=data)
+    response = admin_client.post('/api/v1/genres/', data=data)
+    print(response.json())
     data = {'name': 'Комедия', 'slug': 'comedy'}
     result.append(data)
     admin_client.post('/api/v1/genres/', data=data)

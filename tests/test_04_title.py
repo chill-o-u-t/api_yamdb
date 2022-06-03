@@ -208,6 +208,7 @@ class Test04TitleAPI:
 
     def check_permissions(self, user, user_name, titles, categories, genres):
         client_user = auth_client(user)
+        print(genres[2]['slug'])
         data = {'name': 'Чудо юдо', 'year': 1999, 'genre': [genres[2]['slug'], genres[1]['slug']],
                 'category': categories[0]['slug'], 'description': 'Бум'}
         response = client_user.post('/api/v1/titles/', data=data)

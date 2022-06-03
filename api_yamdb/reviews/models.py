@@ -14,6 +14,12 @@ class User(AbstractUser):
     )
     role = models.CharField(
         max_length=1, choices=ROLES, default='u')
+    bio = models.TextField(blank=True, null=True)
+
+
+class UserConfirmation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    confirmation_code = models.CharField('Код подтверждения', max_length=50)
 
 
 class Genre(SortModel):

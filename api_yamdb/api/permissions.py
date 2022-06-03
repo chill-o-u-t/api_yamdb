@@ -23,6 +23,11 @@ class AdminPermission(permissions.BasePermission):
     """ Пермишен для прав модератор и админ. """
     """ Используется для вьюсетов: произведения, категории и жанры."""
 
+    def has_permission(self, request, view):
+        if request.method not in permissions.SAFE_METHODS:
+            return request.user.role == 'admin'
+        return True
+
     def has_object_permission(self, request, view, obj):
         if request.method not in permissions.SAFE_METHODS:
             return request.user.role == 'admin'
