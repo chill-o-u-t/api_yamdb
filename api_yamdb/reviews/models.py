@@ -64,6 +64,8 @@ class Review(EntryModel):
         on_delete=models.CASCADE,
         related_name='review_author'
     )
+
+
 class Comment(EntryModel):
     review = models.ForeignKey(
         Review,
