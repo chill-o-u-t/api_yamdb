@@ -1,6 +1,4 @@
 import datetime
-from xml.dom import ValidationErr
-from attr import attr
 from django.forms import ValidationError
 
 
@@ -45,6 +43,13 @@ class TokenSerializer(serializers.Serializer):
         ):
             raise ValidationError('Invalid token')
         return super().validate(attrs)
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ('__all__',)
+        model = User
 
 
 class ReviewSerializer(serializers.ModelSerializer):

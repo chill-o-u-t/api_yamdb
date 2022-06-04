@@ -12,18 +12,7 @@ class AuthorOrStaffPermission(permissions.BasePermission):
     """ Редактирование для автора, либо для стафа: комента и ревью. """
 
     def has_object_permission(self, request, view, obj):
-        if request.method not in permissions.SAFE_METHODS:
-            return (
-                obj.author == request.user or request.user.is_staff
-            )
-        return True
-
-    def has_object_permission(self, request, view, obj):
-        if request.method not in permissions.SAFE_METHODS:
-            return (
-                obj.author == request.user or request.user.is_staff
-            )
-        return True
+        return obj.author == request.user or request.user.role == 'admin'
 
 
 class AdminPermission(permissions.BasePermission):
@@ -31,11 +20,7 @@ class AdminPermission(permissions.BasePermission):
     """ Используется для вьюсетов: произведения, категории и жанры."""
 
     def has_permission(self, request, view):
-        if request.method not in permissions.SAFE_METHODS:
-            return request.user.role == 'administrator'
-        return True
-
-    def has_object_permission(self, request, view, obj):
-        if request.method not in permissions.SAFE_METHODS:
-            return request.user.role == 'administrator'
-        return True
+        return (
+            request.user.is_authenticated
+            and request.user.role == 'admin'
+        )

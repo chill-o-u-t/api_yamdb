@@ -12,6 +12,7 @@ from .views import (
     GenreViewSet,
     TitleViewSet,
     CategoryViewSet,
+    UserViewSet,
     get_token,
     signup
 )
@@ -24,6 +25,7 @@ router_v1.register(r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comment
 router_v1.register('genres', GenreViewSet, basename='genres')
 router_v1.register('titles', TitleViewSet, basename='titles')
 router_v1.register('categories', CategoryViewSet, basename='categories')
+router_v1.register(r'users', UserViewSet, basename='users')
 # router_v1.register('auth/token', UserTokenObtainPairView.as_view(), basename='token')
 
 urlpatterns = [

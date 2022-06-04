@@ -8,13 +8,21 @@ CHOICES = ((i, i) for i in range(1, 11))
 
 class User(AbstractUser):
     ROLES = (
-        ('a', 'administrator'),
-        ('m', 'moderator'),
-        ('u', 'user'),
+        ('admin', 'admin'),
+        ('moderator', 'moderator'),
+        ('user', 'user'),
     )
     role = models.CharField(
-        max_length=1, choices=ROLES, default='u')
+        max_length=9, choices=ROLES, default='user')
     bio = models.TextField(blank=True, null=True)
+    email = models.EmailField(
+        blank=False,
+        null=False,
+        max_length=256,
+        unique=True,
+    )
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
 
 
 class UserConfirmation(models.Model):
