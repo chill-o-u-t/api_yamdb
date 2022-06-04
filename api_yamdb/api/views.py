@@ -105,21 +105,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    filter_backends = (filters.SearchFilter,)
+    # filter_backends = (filters.SearchFilter,)
     pagination_class = LimitOffsetPagination
     permission_classes = (
-        AdminPermission,
+        IsAuthenticatedOrReadOnly,
         AuthorOrStaffPermission
     )
 
     def get_title(self):
         return get_object_or_404(
             Title,
-            pk=self.kwargs.get('titles_id')
+            id=self.kwargs.get('title_id')
         )
 
     def get_queryset(self):
-        return self.get_title().review
+        return self.get_title().review.all()
 
     def perform_create(self, serializer):
         serializer.save(
@@ -143,7 +143,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (filters.SearchFilter,)
     pagination_class = LimitOffsetPagination
-
 
     def get_review(self):
         return get_object_or_404(
