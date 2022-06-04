@@ -7,17 +7,32 @@ CHOICES = ((i, i) for i in range(1, 11))
 
 
 class User(AbstractUser):
-    ROLES = (
-        ('a', 'administrator'),
-        ('m', 'moderator'),
-        ('u', 'user'),
-    )
+    ADMIN = 'admin'
+    MODERATOR = "moderator"
+    USER = "user"
+
+    ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
     role = models.CharField(
         max_length=1,
         choices=ROLES,
-        default='u'
+        default='user'
     )
     bio = models.TextField(blank=True, null=True)
+    email = models.EmailField(
+        unique=True,
+    )
+
+    @property
+    def is_user(self):
+        return self.role == self.USER
+
+    @property
+    def is_admin(self):
+        return self.role == self.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == self.MODERATOR
 
 
 class UserConfirmation(models.Model):
@@ -80,7 +95,7 @@ class Comment(EntryModel):
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
-        related_name='review'
+        related_name='comment'
     )
     author = models.ForeignKey(
         User,

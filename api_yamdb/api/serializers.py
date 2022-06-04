@@ -2,8 +2,9 @@ import datetime
 
 from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from rest_framework import serializers, validators
 from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from reviews.models import (
@@ -142,3 +143,35 @@ class TitleGetSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
         model = Title
+
+
+class UserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+    )
+
+    class Meta:
+        fields = (
+            'username',
+            'bio',
+            'email',
+            'role',
+            'first_name',
+            'last_name',
+        )
+        model = User
+        validators = [
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=['email']
+            )
+        ]
+
+
+class UserConfirmationSerializer(serializers.ModelSerializer):
+    confirmation_code = serializers.CharField(
+        required=True
+    )
+    email = serializers.EmailField(
+        required=True
+    )
