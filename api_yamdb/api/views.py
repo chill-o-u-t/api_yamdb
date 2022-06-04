@@ -91,6 +91,9 @@ class UserViewSet(viewsets.ModelViewSet):
     #filter_backends = (filters.SearchFilter,)
     #search_fields = ('username',)
 
+    def perform_destroy(self, instance):
+        return super().perform_destroy(instance)
+'''
     @action(
         methods=['patch', 'get'],
         detail=False,
@@ -111,6 +114,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+'''
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -149,7 +153,7 @@ class GenreViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (AdminPermission,)
+    permission_classes = (IsAuthenticatedOrReadOnly, AdminPermission)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

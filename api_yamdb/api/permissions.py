@@ -16,11 +16,15 @@ class AuthorOrStaffPermission(permissions.BasePermission):
 
 
 class AdminPermission(permissions.BasePermission):
-    """ Пермишен для прав модератор и админ. """
-    """ Используется для вьюсетов: произведения, категории и жанры."""
 
     def has_permission(self, request, view):
-        return (
+        if not (
             request.user.is_authenticated
-            and request.user.role == 'admin'
-        )
+            and (
+                request.user.role == 'admin'
+                or request.user.is_superuser
+            )
+        ):
+            return False
+        else:
+            return True
