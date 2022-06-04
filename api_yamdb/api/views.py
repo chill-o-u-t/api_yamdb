@@ -23,59 +23,64 @@ from reviews.models import (
     UserConfirmation
 )
 from .serializers import (
+    AuthSerializer,
     CommentSerializer,
     ReviewSerializer,
     GenreSerializer,
     CategorySerializer,
     TitleGetSerializer,
     TitlePostSerializer,
-    AuthSerializer,
+    TokenSerializer
 )
-from .tokens import get_tokens_for_user
+from .tokens import get_tokens_for_user, account_activation_token
 from .permissions import (
     IsSuperUserOrReadOnly,
     AuthorOrStaffPermission,
     AdminPermission
 )
+from .send_mail import send_mail
+
+
+@api_view(['POST'])
+@permission_classes((AllowAny, ))
+def signup(request):
+    serializer = AuthSerializer(data=request.data)
+    if serializer.is_valid():
+        user, _ = User.objects.get_or_create(
+            username=serializer.validated_data.get('username'),
+            email=serializer.validated_data.get('email'),
+        )
+        confirmation_code = f'{account_activation_token.make_token(user)}'
+        send_mail(user.email, confirmation_code)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def get_token(request):
     print(request.data)
-    for field in ('username', 'confirmation_code'):
-        if not request.data.get(field):
-            return Response(
-                {f'{field}': 'Это обязательное поле'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    user = UserConfirmation.objects.get(
-        user__username=request.data.get('username'),
-        confirmation_code=request.data.get('confirmation_code')
-    )
-    if user:
-        tokens = get_tokens_for_user(user.user)
-        user.delete()
+    serializer = TokenSerializer(data=request.data)
+    if serializer.is_valid():
+        user = get_object_or_404(
+            User,
+            username=request.data.get('username')
+        )
+        tokens = get_tokens_for_user(user)
         return Response(
             tokens,
             status=status.HTTP_200_OK
         )
     return Response(
-        {'Пользователь не запрашивал код'},
-        status=status.HTTP_404_NOT_FOUND
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
     )
-
-
-class AuthViewSet(viewsets.ModelViewSet):
-    permission_classes = (AllowAny,)
-    queryset = User.objects.all()
-    serializer_class = AuthSerializer
-
-
-'''
-class UserTokenObtainPairView(TokenObtainPairView):
-    serializer_class = UserTokenObtainPairSerializer
-'''
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -108,13 +113,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (AdminPermission,)
+    permission_classes = (AuthorOrStaffPermission,)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (AdminPermission,)
+    permission_classes = (AuthorOrStaffPermission,)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -123,7 +128,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_review(self):
         return get_object_or_404(
-            Review, title=self.kwargs.get('title')
+            Review, title=self.kwargs.get('title_id')
         )
 
     def get_queryset(self):

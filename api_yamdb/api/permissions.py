@@ -18,6 +18,13 @@ class AuthorOrStaffPermission(permissions.BasePermission):
             )
         return True
 
+    def has_object_permission(self, request, view, obj):
+        if request.method not in permissions.SAFE_METHODS:
+            return (
+                obj.author == request.user or request.user.is_staff
+            )
+        return True
+
 
 class AdminPermission(permissions.BasePermission):
     """ Пермишен для прав модератор и админ. """
@@ -25,10 +32,10 @@ class AdminPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         if request.method not in permissions.SAFE_METHODS:
-            return request.user.role == 'admin'
+            return request.user.role == 'administrator'
         return True
 
     def has_object_permission(self, request, view, obj):
         if request.method not in permissions.SAFE_METHODS:
-            return request.user.role == 'admin'
+            return request.user.role == 'administrator'
         return True

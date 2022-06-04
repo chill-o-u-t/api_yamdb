@@ -1,8 +1,12 @@
 import datetime
+from xml.dom import ValidationErr
+from attr import attr
+from django.forms import ValidationError
 
-from django.core.mail import EmailMessage
+
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.response import Response
 from rest_framework.relations import SlugRelatedField
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -13,67 +17,34 @@ from reviews.models import (
     Category,
     Title,
     User,
-    UserConfirmation
 )
 from .tokens import account_activation_token
 
 
-class AuthSerializer(serializers.ModelSerializer):
-    password = ''
+class AuthSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    email = serializers.EmailField()
 
-    def validate(self, data):
-        print(data)
-        if data['username'] == 'me':
-            raise serializers.ValidationError({
-                "username": "This username is restricted",
-            })
-        return data
-
-    def create(self, validated_data):
-        user, _ = User.objects.get_or_create(
-            username=validated_data.get('username'),
-            email=validated_data.get('email'),
-            password=self.password
-        )
-        mail_subject = 'Activate your account.'
-        confirmation_code = f'{account_activation_token.make_token(user)}'
-        print('--confirmation_code--')
-        print(confirmation_code)
-        to_email = validated_data.get('email')
-        email = EmailMessage(
-            mail_subject, confirmation_code, to=[to_email]
-        )
-        email.send()
-        UserConfirmation.objects.create(
-            user=user,
-            confirmation_code=confirmation_code
-        )
-        return user
-
-    class Meta:
-        model = User
-        fields = ('username', 'email')
+    def validate(self, attrs):
+        if attrs.get('username') == 'me':
+            raise ValidationError('restricted name')
+        return super().validate(attrs)
 
 
-'''
-class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
-    password = ''
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
 
-    def validate(self, data):
-        data = super().validate(data)
-        if UserConfirmation.get(user=data.user).exists():
-            print(data.user)
-        data['password'] = ''
-        print(data)
-        return data
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token['confirmation_code'] = ''
-        token['password'] = ''
-        return token
-'''
+    def validate(self, attrs):
+        if not account_activation_token.check_token(
+            get_object_or_404(
+                User,
+                username=attrs.get('username')
+            ),
+            attrs.get('confirmation_code')
+        ):
+            raise ValidationError('Invalid token')
+        return super().validate(attrs)
 
 
 class ReviewSerializer(serializers.ModelSerializer):

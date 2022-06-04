@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 class TokenGenerator(PasswordResetTokenGenerator):
     def _make_hash_value(self, user, timestamp):
+        print(user)
         return (
             six.text_type(user.pk) + six.text_type(timestamp)
             + six.text_type(user.is_active)
@@ -21,3 +22,8 @@ def get_tokens_for_user(user):
         # 'refresh': str(refresh),
         'token': str(refresh.access_token),
     }
+
+
+def activate_user(request, uidb64, token):
+
+    pass
