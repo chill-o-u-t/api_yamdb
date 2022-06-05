@@ -10,6 +10,8 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
+from core.send_mail import send_mail
+from core.tokens import get_tokens_for_user, account_activation_token
 from reviews.models import (
     Review,
     Title,
@@ -28,8 +30,6 @@ from .serializers import (
     UserSerializer,
     TokenSerializer
 )
-from .send_mail import send_mail
-from .tokens import get_tokens_for_user, account_activation_token
 from .permissions import (
     AuthorOrStaffPermission,
     AdminPermission,
@@ -117,7 +117,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     pagination_class = LimitOffsetPagination
     permission_classes = (
-        AuthorOrStaffPermission,
+        AdminPermission,
+        AuthorOrStaffPermission
     )
 
     def get_title(self):
@@ -241,4 +242,5 @@ class TitleViewSet(viewsets.ModelViewSet):
             genre_dict.pop('id')
             genres.append(genre_dict)
         serialized_data['genre'] = genres
+
         return Response(serialized_data)

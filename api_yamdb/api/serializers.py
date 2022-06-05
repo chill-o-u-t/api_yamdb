@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
+from core.tokens import account_activation_token
 from reviews.models import (
     Comment,
     Review,
@@ -13,7 +14,6 @@ from reviews.models import (
     Title,
     User,
 )
-from .tokens import account_activation_token
 
 
 class AuthSerializer(serializers.Serializer):
