@@ -66,34 +66,30 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'pub_date', 'score')
 
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
-        slug_field='username'
-    )
-    title = serializers.SlugRelatedField(
-        slug_field='name',
-        read_only=True
+        slug_field='username',
     )
 
     class Meta:
+        fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
-        fields = '__all__'
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ('name', 'slug')
+        exclude = ('id',)
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
@@ -105,27 +101,46 @@ class TitlePostSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Category.objects.all()
     )
+    rating = serializers.IntegerField(read_only=True)
 
     def validate(self, data):
         year_now = datetime.datetime.now().year
-        if "year" in data:
-            if data["year"] > year_now:
+        if 'year' in data:
+            if data['year'] > year_now:
                 raise serializers.ValidationError({
-                    "year": "You can't add titles that are not release yet",
+                    'year': "You can't add titles that are not release yet",
                 })
         return super(TitlePostSerializer, self).validate(data)
 
     class Meta:
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'description',
+            'genre',
+            'category',
+            'rating'
+        )
         model = Title
+        read_only_fields = ('id', 'rating')
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'category',
+            'genre'
+        )
         model = Title
 
 

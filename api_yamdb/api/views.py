@@ -1,7 +1,9 @@
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.forms.models import model_to_dict
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework import status
+from rest_framework import status, mixins
 from rest_framework import viewsets, filters
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
@@ -19,6 +21,8 @@ from reviews.models import (
     Category,
     User,
 )
+
+from .filters import FilterForTitle
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -35,6 +39,16 @@ from .permissions import (
     AdminPermission,
     AdminOrReadOnlyPermission
 )
+
+
+class ListViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+
+    pass
 
 
 @api_view(['POST'])
@@ -114,53 +128,42 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    filter_backends = (filters.SearchFilter,)
-    pagination_class = LimitOffsetPagination
     permission_classes = (
-        AdminPermission,
         AuthorOrStaffPermission,
         IsAuthenticatedOrReadOnly
     )
+    pagination_class = LimitOffsetPagination
 
     def get_title(self):
         return get_object_or_404(
             Title,
-            pk=self.kwargs.get('titles_id')
+            id=self.kwargs.get('title_id')
         )
 
     def get_queryset(self):
-        return self.get_title().review
+        return self.get_title().review.all()
 
     def perform_create(self, serializer):
         serializer.save(
             title=self.get_title(),
-            user=self.request.user
+            author=self.request.user
         )
-
-    def get_raiting(self):
-        reviews = self.get_title().review
-        summ_of_scores = 0
-        for review in reviews:
-            summ_of_scores += review.score
-        return summ_of_scores / reviews.count()
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (
         AuthorOrStaffPermission,
-        IsAuthenticated
+        IsAuthenticatedOrReadOnly
     )
-    filter_backends = (filters.SearchFilter,)
-    pagination_class = LimitOffsetPagination
 
     def get_review(self):
         return get_object_or_404(
-            Review, title=self.kwargs.get('title')
+            Review, id=self.kwargs.get('review_id', 'title_id')
         )
 
     def get_queryset(self):
-        return self.get_review().comment
+        return self.get_review().comment.all()
 
     def perform_create(self, serializer):
         serializer.save(
@@ -169,29 +172,32 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(ListViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (AdminOrReadOnlyPermission,)
-    pagination_class = LimitOffsetPagination
+    lookup_field = 'slug'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(ListViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (AdminOrReadOnlyPermission,)
-    pagination_class = LimitOffsetPagination
+    lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('review__score'))
     permission_classes = (AdminOrReadOnlyPermission,)
     serializer_class = TitlePostSerializer
-    pagination_class = LimitOffsetPagination
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('following__username',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = FilterForTitle
+    ordering_fields = ('name',)
+    filterset_fields = ('genre__slug',)
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:

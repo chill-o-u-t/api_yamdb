@@ -1,9 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from core.models import SortModel, EntryModel
-
-CHOICES = ((i, i) for i in range(1, 11))
 
 
 class User(AbstractUser):
@@ -70,7 +69,10 @@ class GenreTitle(models.Model):
 
 
 class Review(EntryModel):
-    score = models.IntegerField(choices=CHOICES, null=True)
+    score = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        null=True
+    )
     title = models.ForeignKey(
         Title,
         verbose_name='Название',
@@ -83,6 +85,16 @@ class Review(EntryModel):
         on_delete=models.CASCADE,
         related_name='review_author'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("title", "author"), name="unique_title_author"
+            )
+        ]
+
+    def __str__(self):
+        return self.text[:15]
 
 
 class Comment(EntryModel):
