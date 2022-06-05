@@ -1,11 +1,9 @@
 import datetime
 
-from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers, validators
+from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from reviews.models import (
     Comment,
@@ -14,46 +12,39 @@ from reviews.models import (
     Category,
     Title,
     User,
-    UserConfirmation
 )
 from .tokens import account_activation_token
 
 
-class AuthSerializer(serializers.ModelSerializer):
-    password = ''
+class AuthSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    email = serializers.EmailField()
 
-    def validate(self, data):
-        print(data)
-        if data['username'] == 'me':
-            raise serializers.ValidationError({
-                "username": "This username is restricted",
-            })
-        return data
+    def validate(self, attrs):
+        if attrs.get('username') == 'me':
+            raise serializers.ValidationError('restricted name')
+        if (
+            User.objects.filter(email=attrs.get('email')).exists()
+            or User.objects.filter(username=attrs.get('username')).exists()
+        ):
+            raise serializers.ValidationError('duplicated mail')
+        return super().validate(attrs)
 
-    def create(self, validated_data):
-        user, _ = User.objects.get_or_create(
-            username=validated_data.get('username'),
-            email=validated_data.get('email'),
-            password=self.password
-        )
-        mail_subject = 'Activate your account.'
-        confirmation_code = f'{account_activation_token.make_token(user)}'
-        print('--confirmation_code--')
-        print(confirmation_code)
-        to_email = validated_data.get('email')
-        email = EmailMessage(
-            mail_subject, confirmation_code, to=[to_email]
-        )
-        email.send()
-        UserConfirmation.objects.create(
-            user=user,
-            confirmation_code=confirmation_code
-        )
-        return user
 
-    class Meta:
-        model = User
-        fields = ('username', 'email')
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
+
+    def validate(self, attrs):
+        if not account_activation_token.check_token(
+            get_object_or_404(
+                User,
+                username=attrs.get('username')
+            ),
+            attrs.get('confirmation_code')
+        ):
+            raise serializers.ValidationError('Invalid token')
+        return super().validate(attrs)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -68,7 +59,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if self.context['request'].method == 'POST':
-            if Review.object.filter(
+            if Review.objects.filter(
                 author=self.context['request'].user,
                 title=get_object_or_404(
                     Title,
@@ -78,7 +69,7 @@ class ReviewSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Нельзя повторно писать ревью'
                 )
-        return data
+        return super().validate(data)
 
     class Meta:
         model = Review
@@ -166,12 +157,3 @@ class UserSerializer(serializers.ModelSerializer):
                 fields=['email']
             )
         ]
-
-
-class UserConfirmationSerializer(serializers.ModelSerializer):
-    confirmation_code = serializers.CharField(
-        required=True
-    )
-    email = serializers.EmailField(
-        required=True
-    )

@@ -7,18 +7,15 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
 
 from reviews.models import (
     Review,
-    Comment,
     Title,
     Genre,
     Category,
     User,
-    UserConfirmation
 )
 from .serializers import (
     CommentSerializer,
@@ -28,46 +25,58 @@ from .serializers import (
     TitleGetSerializer,
     TitlePostSerializer,
     AuthSerializer,
-    UserSerializer
+    UserSerializer,
+    TokenSerializer
 )
-from .tokens import get_tokens_for_user
+from .send_mail import send_mail
+from .tokens import get_tokens_for_user, account_activation_token
 from .permissions import (
     AuthorOrStaffPermission,
     AdminPermission,
+    AdminOrReadOnlyPermission
 )
+
+
+@api_view(['POST'])
+@permission_classes((AllowAny, ))
+def signup(request):
+    serializer = AuthSerializer(data=request.data)
+    if serializer.is_valid():
+        user, _ = User.objects.get_or_create(
+            username=serializer.validated_data.get('username'),
+            email=serializer.validated_data.get('email'),
+        )
+        confirmation_code = f'{account_activation_token.make_token(user)}'
+        send_mail(user.email, confirmation_code)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def get_token(request):
     print(request.data)
-    for field in ('username', 'confirmation_code'):
-        if not request.data.get(field):
-            return Response(
-                {f'{field}': 'Это обязательное поле'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    user = UserConfirmation.objects.get(
-        user__username=request.data.get('username'),
-        confirmation_code=request.data.get('confirmation_code')
-    )
-    if user:
-        tokens = get_tokens_for_user(user.user)
-        user.delete()
+    serializer = TokenSerializer(data=request.data)
+    if serializer.is_valid():
+        user = get_object_or_404(
+            User,
+            username=request.data.get('username')
+        )
+        tokens = get_tokens_for_user(user)
         return Response(
             tokens,
             status=status.HTTP_200_OK
         )
     return Response(
-        {'Пользователь не запрашивал код'},
-        status=status.HTTP_404_NOT_FOUND
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
     )
-
-
-class AuthViewSet(viewsets.ModelViewSet):
-    permission_classes = (AllowAny,)
-    queryset = User.objects.all()
-    serializer_class = AuthSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -108,8 +117,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     pagination_class = LimitOffsetPagination
     permission_classes = (
-        AdminPermission,
-        AuthorOrStaffPermission
+        AuthorOrStaffPermission,
     )
 
     def get_title(self):
@@ -144,7 +152,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     pagination_class = LimitOffsetPagination
 
-
     def get_review(self):
         return get_object_or_404(
             Review, title=self.kwargs.get('title')
@@ -163,20 +170,22 @@ class CommentViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (AdminPermission,)
+    permission_classes = (AdminOrReadOnlyPermission,)
     pagination_class = LimitOffsetPagination
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (AdminPermission,)
+    permission_classes = (AdminOrReadOnlyPermission,)
     pagination_class = LimitOffsetPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (AdminOrReadOnlyPermission,)
     serializer_class = TitlePostSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
@@ -232,5 +241,4 @@ class TitleViewSet(viewsets.ModelViewSet):
             genre_dict.pop('id')
             genres.append(genre_dict)
         serialized_data['genre'] = genres
-
         return Response(serialized_data)
