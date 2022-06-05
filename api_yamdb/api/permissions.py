@@ -39,5 +39,3 @@ class AdminOrReadOnlyPermission(permissions.BasePermission):
                 and request.user.is_admin
             )
         )
-
-
