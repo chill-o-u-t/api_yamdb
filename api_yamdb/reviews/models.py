@@ -35,11 +35,6 @@ class User(AbstractUser):
         return self.role == self.MODERATOR
 
 
-class UserConfirmation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    confirmation_code = models.CharField('Код подтверждения', max_length=50)
-
-
 class Genre(SortModel):
     pass
 

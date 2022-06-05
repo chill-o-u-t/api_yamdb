@@ -242,6 +242,7 @@ class Test01UserAPI:
         )
         response = admin_client.get('/api/v1/users/')
         data = response.json()
+
         assert len(data['results']) == users.count(), (
             'Проверьте, что при GET запросе `/api/v1/users/` возвращаете данные с пагинацией. '
             'Значение параметра `results` не правильное'
