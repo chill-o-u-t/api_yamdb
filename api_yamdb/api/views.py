@@ -2,17 +2,23 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.forms.models import model_to_dict
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+    action
+)
 from rest_framework import status, mixins
 from rest_framework import viewsets, filters
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
     AllowAny,
-    IsAuthenticated, IsAuthenticatedOrReadOnly,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
 
 from core.send_mail import send_mail
+from .filters import FilterForTitle
 from core.tokens import get_tokens_for_user, account_activation_token
 from reviews.models import (
     Review,
@@ -21,8 +27,6 @@ from reviews.models import (
     Category,
     User,
 )
-
-from .filters import FilterForTitle
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -47,7 +51,6 @@ class ListViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-
     pass
 
 
@@ -208,23 +211,24 @@ class TitleViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        serialized_data = serializer.data
         category_dict = model_to_dict(
-            Category.objects.get(slug=serialized_data['category'])
+            get_object_or_404(
+                Category,
+                slug=serializer.data['category']
+            )
         )
         category_dict.pop('id')
-        serialized_data['category'] = category_dict
-
+        serializer.data['category'] = category_dict
         genres = list()
-        for genre in serialized_data['genre']:
+        for genre in serializer.data['genre']:
             genre_dict = model_to_dict(
                 Genre.objects.get(slug=genre)
             )
             genre_dict.pop('id')
             genres.append(genre_dict)
-        serialized_data['genre'] = genres
+        serializer.data['genre'] = genres
 
-        return Response(serialized_data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk, partial=False):
         instance = self.get_object()
@@ -235,19 +239,20 @@ class TitleViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        serialized_data = serializer.data
         category_dict = model_to_dict(
-            Category.objects.get(slug=serialized_data['category'])
+            get_object_or_404(
+                Category,
+                slug=serializer.data['category']
+            )
         )
         category_dict.pop('id')
-        serialized_data['category'] = category_dict
+        serializer.data['category'] = category_dict
         genres = list()
-        for genre in serialized_data['genre']:
+        for genre in serializer.data['genre']:
             genre_dict = model_to_dict(
                 Genre.objects.get(slug=genre)
             )
             genre_dict.pop('id')
             genres.append(genre_dict)
-        serialized_data['genre'] = genres
-
-        return Response(serialized_data)
+        serializer.data['genre'] = genres
+        return Response(serializer.data)
