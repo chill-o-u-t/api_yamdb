@@ -30,5 +30,6 @@ class AdminPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if request.method not in permissions.SAFE_METHODS:
+            print(request.user.role == 'admin')
             return request.user.role == 'admin'
         return True
