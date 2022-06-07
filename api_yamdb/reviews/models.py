@@ -2,8 +2,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-from core.models import SortModel, EntryModel
-
 
 class User(AbstractUser):
     ADMIN = 'admin'
@@ -14,7 +12,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=1,
         choices=ROLES,
-        default='user'
+        default=USER
     )
     bio = models.TextField(blank=True, null=True)
     email = models.EmailField(
@@ -34,12 +32,20 @@ class User(AbstractUser):
         return self.role == self.MODERATOR
 
 
-class Genre(SortModel):
-    pass
+class Genre(models.Model):
+    name = models.CharField(max_length=256, unique=True)
+    slug = models.SlugField("Путь", max_length=50, unique=True)
+
+    def __str__(self):
+        return f'{self.name}'
 
 
-class Category(SortModel):
-    pass
+class Category(models.Model):
+    name = models.CharField(max_length=256, unique=True)
+    slug = models.SlugField("Путь", max_length=50, unique=True)
+
+    def __str__(self):
+        return f'{self.name}'
 
 
 class Title(models.Model):
@@ -49,14 +55,14 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         Genre,
         verbose_name='Жанр',
-        related_name='genre',
+        related_name='genres',
         through='GenreTitle'
     )
     category = models.ForeignKey(
         Category,
         verbose_name='Категория',
         on_delete=models.PROTECT,
-        related_name='category',
+        related_name='categorys',
     )
 
 
@@ -68,7 +74,7 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-class Review(EntryModel):
+class Review(models.Model):
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         null=True
@@ -77,13 +83,20 @@ class Review(EntryModel):
         Title,
         verbose_name='Название',
         on_delete=models.CASCADE,
-        related_name='review'
+        related_name='reviews'
     )
     author = models.ForeignKey(
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='review_author'
+        related_name='review_authors'
+    )
+    pub_date = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+    text = models.TextField(
+        'Текст',
     )
 
     class Meta:
@@ -97,16 +110,23 @@ class Review(EntryModel):
         return self.text[:15]
 
 
-class Comment(EntryModel):
+class Comment(models.Model):
     review = models.ForeignKey(
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
-        related_name='comment'
+        related_name='comments'
     )
     author = models.ForeignKey(
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='comment_author'
+        related_name='comment_authors'
+    )
+    pub_date = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+    text = models.TextField(
+        'Текст',
     )

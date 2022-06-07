@@ -45,7 +45,7 @@ from .permissions import (
 )
 
 
-class ListViewSet(
+class ListDestroyCreateViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
@@ -78,18 +78,17 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def get_token(request):
-    print(request.data)
     serializer = TokenSerializer(data=request.data)
-    if serializer.is_valid():
-        user = get_object_or_404(
-            User,
-            username=request.data.get('username')
-        )
-        tokens = get_tokens_for_user(user)
-        return Response(
-            tokens,
-            status=status.HTTP_200_OK
-        )
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(
+        User,
+        username=request.data.get('username')
+    )
+    tokens = get_tokens_for_user(user)
+    return Response(
+        tokens,
+        status=status.HTTP_200_OK
+    )
     return Response(
         serializer.errors,
         status=status.HTTP_400_BAD_REQUEST
@@ -119,12 +118,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 data=request.data,
                 partial=True
             )
-            if serializer.is_valid():
-                serializer.save(role=instance.role)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=instance.role)
+            return Response(serializer.data)
         serializer = UserSerializer(instance, partial=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -144,7 +140,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        return self.get_title().review.all()
+        return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
         serializer.save(
@@ -166,7 +162,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        return self.get_review().comment.all()
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
         serializer.save(
@@ -175,7 +171,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-class GenreViewSet(ListViewSet):
+class GenreViewSet(ListDestroyCreateViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (AdminOrReadOnlyPermission,)
@@ -184,7 +180,7 @@ class GenreViewSet(ListViewSet):
     search_fields = ('name',)
 
 
-class CategoryViewSet(ListViewSet):
+class CategoryViewSet(ListDestroyCreateViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (AdminOrReadOnlyPermission,)
@@ -194,7 +190,7 @@ class CategoryViewSet(ListViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('review__score'))
+    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     permission_classes = (AdminOrReadOnlyPermission,)
     serializer_class = TitlePostSerializer
     filter_backends = (DjangoFilterBackend,)
@@ -216,18 +212,15 @@ class TitleViewSet(viewsets.ModelViewSet):
                 Category,
                 slug=serializer.data['category']
             )
-        )
-        category_dict.pop('id')
+        ).pop('id')
         serializer.data['category'] = category_dict
         genres = list()
         for genre in serializer.data['genre']:
             genre_dict = model_to_dict(
-                Genre.objects.get(slug=genre)
-            )
-            genre_dict.pop('id')
+                get_object_or_404(Genre, slug=genre)
+            ).pop('id')
             genres.append(genre_dict)
         serializer.data['genre'] = genres
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk, partial=False):
@@ -244,15 +237,13 @@ class TitleViewSet(viewsets.ModelViewSet):
                 Category,
                 slug=serializer.data['category']
             )
-        )
-        category_dict.pop('id')
+        ).pop('id')
         serializer.data['category'] = category_dict
         genres = list()
         for genre in serializer.data['genre']:
             genre_dict = model_to_dict(
-                Genre.objects.get(slug=genre)
-            )
-            genre_dict.pop('id')
+                get_object_or_404(Genre, slug=genre)
+            ).pop('id')
             genres.append(genre_dict)
         serializer.data['genre'] = genres
         return Response(serializer.data)
