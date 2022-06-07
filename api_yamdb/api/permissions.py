@@ -40,5 +40,3 @@ class AdminOrReadOnlyPermission(permissions.BasePermission):
                 or request.user.is_superuser
             )
         )
-
-
