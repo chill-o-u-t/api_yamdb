@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from api.validators import validate_year
 
 from core.models import SortModel, EntryModel
 
@@ -44,7 +45,7 @@ class Category(SortModel):
 
 class Title(models.Model):
     name = models.CharField('Название', max_length=150)
-    year = models.IntegerField('Год выхода')
+    year = models.IntegerField('Год выхода', validators=[validate_year])
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
         Genre,
