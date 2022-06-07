@@ -1,11 +1,10 @@
 import datetime
+import re
 
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-from core.tokens import account_activation_token
 from reviews.models import (
     Comment,
     Review,
@@ -20,31 +19,26 @@ class AuthSerializer(serializers.Serializer):
     username = serializers.CharField()
     email = serializers.EmailField()
 
-    def validate(self, attrs):
-        if attrs.get('username') == 'me':
-            raise serializers.ValidationError('restricted name')
+    def validate_username(self, value):
         if (
-                User.objects.filter(email=attrs.get('email')).exists()
-                or User.objects.filter(username=attrs.get('username')).exists()
+            value == 'me'
+            or not re.match(r'[\w.@+-@./+-]+', value)
         ):
-            raise serializers.ValidationError('duplicated mail')
-        return super().validate(attrs)
+            raise serializers.ValidationError('restricted or invalid name')
+        return super().validate(value)
 
 
 class TokenSerializer(serializers.Serializer):
     username = serializers.CharField()
-    confirmation_code = serializers.CharField()
+    confirmation_code = serializers.CharField(max_length=24)
 
-    def validate(self, attrs):
-        if not account_activation_token.check_token(
-            get_object_or_404(
-                User,
-                username=attrs.get('username')
-            ),
-            attrs.get('confirmation_code')
+    def validate_username(self, value):
+        if (
+            value == 'me'
+            or not re.match(r'[\w.@+-@./+-]+', value)
         ):
-            raise serializers.ValidationError('Invalid token')
-        return super().validate(attrs)
+            raise serializers.ValidationError('restricted or invalid name')
+        return super().validate(value)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
