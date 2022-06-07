@@ -139,10 +139,6 @@ class TitleGetSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        required=True,
-    )
-
     class Meta:
         fields = (
             'username',
@@ -153,9 +149,10 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
         )
         model = User
-        validators = [
-            UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=['email']
+
+    def validate_username(self, value):
+        if value == "me":
+            raise serializers.ValidationError(
+                "Использовать 'me' в качестве username запрещено!!!"
             )
-        ]
+        return value

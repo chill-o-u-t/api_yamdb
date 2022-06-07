@@ -2,7 +2,7 @@ from rest_framework import permissions
 
 
 class AuthorOrStaffPermission(permissions.BasePermission):
-    """ Редактирование для автора, либо для стафа: комента и ревью. """
+    """ Редактирование для автора, либо для стафа. """
 
     def has_object_permission(self, request, view, obj):
         if request.method not in permissions.SAFE_METHODS:
@@ -11,6 +11,7 @@ class AuthorOrStaffPermission(permissions.BasePermission):
                 or request.user.is_admin
                 or request.user.is_moderator
                 or request.user.is_superuser
+                or request.user.is_staff
             )
         return True
 
@@ -21,9 +22,9 @@ class AdminPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return (
-            request.user.is_superuser
-            or request.user.is_authenticated
+            request.user.is_authenticated
             and request.user.is_admin
+            or request.user.is_superuser
         )
 
 
@@ -34,8 +35,8 @@ class AdminOrReadOnlyPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
             request.method in permissions.SAFE_METHODS or (
-                request.user.is_superuser
-                or request.user.is_authenticated
+                request.user.is_authenticated
                 and request.user.is_admin
+                or request.user.is_superuser
             )
         )
