@@ -102,7 +102,6 @@ def signup(request):
 def get_token(request):
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-<<<<<<< HEAD
     try:
         user = User.objects.get(username=request.data.get('username'))
     except User.DoesNotExist:
@@ -124,21 +123,6 @@ def get_token(request):
             tokens,
             status=status.HTTP_200_OK
         )
-=======
-    user = get_object_or_404(
-        User,
-        username=request.data.get('username')
-    )
-    tokens = get_tokens_for_user(user)
-    return Response(
-        tokens,
-        status=status.HTTP_200_OK
-    )
-    return Response(
-        serializer.errors,
-        status=status.HTTP_400_BAD_REQUEST
-    )
->>>>>>> submaster
 
 
 class UserViewSet(viewsets.ModelViewSet):
