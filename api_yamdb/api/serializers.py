@@ -3,7 +3,6 @@ import re
 
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import (
     Comment,
@@ -97,10 +96,10 @@ class TitlePostSerializer(serializers.ModelSerializer):
     )
     rating = serializers.IntegerField(read_only=True)
 
-    def validate(self, data):
+    def validate_year(self, data):
         year_now = datetime.datetime.now().year
-        if 'year' in data:
-            if data['year'] > year_now:
+        if data:
+            if data > year_now:
                 raise serializers.ValidationError({
                     'year': "You can't add titles that are not release yet",
                 })

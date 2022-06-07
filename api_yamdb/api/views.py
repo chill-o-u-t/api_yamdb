@@ -1,7 +1,6 @@
 from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django.forms.models import model_to_dict
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import (
     api_view,
@@ -18,9 +17,6 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from core.send_mail import send_mail
-from .filters import FilterForTitle
-from core.tokens import get_tokens_for_user, account_activation_token
 from reviews.models import (
     Review,
     Title,
@@ -28,6 +24,9 @@ from reviews.models import (
     Category,
     User,
 )
+from .send_mail import send_mail
+from .filters import FilterForTitle
+from .tokens import get_tokens_for_user, account_activation_token
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -232,48 +231,3 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return TitleGetSerializer
         return TitlePostSerializer
-
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        category_dict = model_to_dict(
-            get_object_or_404(
-                Category,
-                slug=serializer.data['category']
-            )
-        ).pop('id')
-        serializer.data['category'] = category_dict
-        genres = list()
-        for genre in serializer.data['genre']:
-            genre_dict = model_to_dict(
-                get_object_or_404(Genre, slug=genre)
-            ).pop('id')
-            genres.append(genre_dict)
-        serializer.data['genre'] = genres
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def update(self, request, pk, partial=False):
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance,
-            data=request.data,
-            partial=partial
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        category_dict = model_to_dict(
-            get_object_or_404(
-                Category,
-                slug=serializer.data['category']
-            )
-        ).pop('id')
-        serializer.data['category'] = category_dict
-        genres = list()
-        for genre in serializer.data['genre']:
-            genre_dict = model_to_dict(
-                get_object_or_404(Genre, slug=genre)
-            ).pop('id')
-            genres.append(genre_dict)
-        serializer.data['genre'] = genres
-        return Response(serializer.data)
