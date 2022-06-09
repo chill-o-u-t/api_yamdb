@@ -2,21 +2,20 @@ import datetime
 import re
 
 from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.db import models
 
 
-class ValidateYear(object):
-    def validate_year(self, data):
+class ValidateYearMixin:
+    def validate_year(self, value):
         year_now = datetime.datetime.now().year
-        if data:
-            if data > year_now:
+        if value:
+            if value > year_now:
                 raise ValidationError({
-                    'year': f"You can't add year {data} later then current"
+                    'year': f"You can't add year {value} later then current"
                 })
-        return data
+        return value
 
 
 class UsernameValidateMixin:
@@ -79,7 +78,7 @@ class Category(models.Model):
         return f'{self.name}'
 
 
-class Title(models.Model, ValidateYear):
+class Title(models.Model, ValidateYearMixin):
     name = models.CharField('Название', max_length=150)
     year = models.IntegerField('Год выхода')
     description = models.TextField('Описание', blank=True)
