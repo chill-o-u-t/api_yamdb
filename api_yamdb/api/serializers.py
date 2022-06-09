@@ -1,5 +1,4 @@
 import datetime
-import re
 
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
@@ -11,33 +10,18 @@ from reviews.models import (
     Category,
     Title,
     User,
+    UsernameValidateMixin
 )
 
 
-class AuthSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    email = serializers.EmailField()
-
-    def validate_username(self, value):
-        if (
-            value == 'me'
-            or not re.match(r'[\w.@+-@./+-]+', value)
-        ):
-            raise serializers.ValidationError('restricted or invalid name')
-        return super().validate(value)
+class AuthSerializer(serializers.Serializer, UsernameValidateMixin):
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField(max_length=254)
 
 
-class TokenSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    confirmation_code = serializers.CharField(max_length=24)
-
-    def validate_username(self, value):
-        if (
-            value == 'me'
-            or not re.match(r'[\w.@+-@./+-]+', value)
-        ):
-            raise serializers.ValidationError('restricted or invalid name')
-        return super().validate(value)
+class TokenSerializer(serializers.Serializer, UsernameValidateMixin):
+    username = serializers.CharField(max_length=150)
+    confirmation_code = serializers.CharField(max_length=6)
 
 
 class ReviewSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
-from django.db import IntegrityError
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils.crypto import get_random_string
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -26,7 +26,7 @@ from reviews.models import (
 )
 from .send_mail import send_mail
 from .filters import FilterForTitle
-from .tokens import get_tokens_for_user, account_activation_token
+from .tokens import get_tokens_for_user
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -59,37 +59,29 @@ class ListDestroyCreateViewSet(
 def signup(request):
     serializer = AuthSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    if (
-        User.objects.filter(
-            email=request.data.get('email')
-        ).exists()
-        and User.objects.filter(
-            username=request.data.get('username')
-        ).exists()
-    ):
-        try:
-            user = User.objects.get(
-                username=request.data.get('username'),
-                email=request.data.get('email')
-            )
-        except User.DoesNotExist:
-            return Response(
-                {'Cannot get user: invalid email-username pair'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    else:
-        try:
-            user = User.objects.create(
-                username=request.data.get('username'),
-                email=request.data.get('email')
-            )
-        except IntegrityError:
-            return Response(
-                {'Cannot create user: invalid email-username pair'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    confirmation_code = account_activation_token.make_token(user)
-    send_mail(user.email, confirmation_code)
+    if User.objects.filter(
+        (
+            Q(email=serializer.validated_data.get('email'))
+            | Q(username=serializer.validated_data.get('username'))
+        )
+        & ~Q(
+            email=serializer.validated_data.get('email'),
+            username=serializer.validated_data.get('username')
+        )
+    ).exists():
+        return Response(
+            {'username does not match email'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    user, _ = User.objects.get_or_create(
+        email=serializer.validated_data.get('email'),
+        username=serializer.validated_data.get('username'),
+    )
+    confirmation_code = get_random_string(length=6)
+    user.confirmation_code = confirmation_code
+    user.save()
+    # print(user.confirmation_code)
+    send_mail(user.email, user.confirmation_code)
     return Response(
         serializer.data,
         status=status.HTTP_200_OK
@@ -101,27 +93,25 @@ def signup(request):
 def get_token(request):
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    try:
-        user = User.objects.get(username=request.data.get('username'))
-    except User.DoesNotExist:
+    user = get_object_or_404(
+        User,
+        username=serializer.validated_data.get('username')
+    )
+    if (
+        user.confirmation_code
+        != serializer.validated_data.get('confirmation_code')
+    ):
         return Response(
-            {'user does not exist'},
-            status=status.HTTP_404_NOT_FOUND
+            {'invalid confirmation code'},
+            status=status.HTTP_400_BAD_REQUEST
         )
-    else:
-        if not account_activation_token.check_token(
-            user,
-            request.data.get('confirmation_code')
-        ):
-            return Response(
-                {'invalid token'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        tokens = get_tokens_for_user(user)
-        return Response(
-            tokens,
-            status=status.HTTP_200_OK
-        )
+    user.confirmation_code = ''
+    user.save()
+    tokens = get_tokens_for_user(user)
+    return Response(
+        tokens,
+        status=status.HTTP_200_OK
+    )
 
 
 class UserViewSet(viewsets.ModelViewSet):

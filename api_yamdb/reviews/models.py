@@ -1,11 +1,24 @@
+import re
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 from api.validators import validate_year
 
 
-class User(AbstractUser):
+class UsernameValidateMixin:
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise ValidationError('restricted or invalid name')
+        if not re.match(r'[\w.@+-@./+-]+', value):
+            raise ValidationError('restricted symbols in username')
+        return value
+
+
+class User(AbstractUser, UsernameValidateMixin):
     ADMIN = 'admin'
     MODERATOR = "moderator"
     USER = "user"
@@ -19,6 +32,11 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     email = models.EmailField(
         unique=True,
+    )
+    confirmation_code = models.CharField(
+        'confirmation code',
+        max_length=32,
+        blank=True
     )
 
     @property
