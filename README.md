@@ -88,3 +88,16 @@ python manage.py createsuperuser
 ```
 python manage.py runserver
 ```
+## Тестовая база данных
+Создание тестовой базы данных осуществляется с помощью файла управления Django-проектом:
+```
+api_yamdb\manage.py
+```
+Файл скрипта располагается в следующем каталоге:
+```
+api_yamdb\reviews\management\commands\fill_db.py
+```
+Что бы создать тестовую базу нужно выполнить команду:
+```
+python3 manage.py fill_db
+```
