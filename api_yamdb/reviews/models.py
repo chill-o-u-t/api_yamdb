@@ -35,7 +35,7 @@ class User(AbstractUser, UsernameValidateMixin):
     )
     confirmation_code = models.CharField(
         'confirmation code',
-        max_length=32,
+        max_length=6,
         blank=True
     )
 
