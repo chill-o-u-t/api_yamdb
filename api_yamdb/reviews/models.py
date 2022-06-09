@@ -8,7 +8,6 @@ from django.db import models
 
 
 class ValidateYearMixin:
-
     def validate_year(self, value):
         year_now = datetime.datetime.now().year
         if value:
@@ -20,7 +19,6 @@ class ValidateYearMixin:
 
 
 class UsernameValidateMixin:
-
     def validate_username(self, value):
         if value == 'me':
             raise ValidationError('restricted or invalid name')
@@ -36,13 +34,16 @@ class User(AbstractUser, UsernameValidateMixin):
 
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
     role = models.CharField(
-        max_length=1,
+        max_length=8,
         choices=ROLES,
         default=USER
     )
     bio = models.TextField(blank=True, null=True)
     email = models.EmailField(
+        max_length=50,
         unique=True,
+        blank=False,
+        null=False
     )
     confirmation_code = models.CharField(
         'confirmation code',
@@ -56,27 +57,44 @@ class User(AbstractUser, UsernameValidateMixin):
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN
+        return self.role == self.ADMIN or self.is_staff
 
     @property
     def is_moderator(self):
         return self.role == self.MODERATOR
 
 
-class Genre(models.Model):
+class SortModel(models.Model):
     name = models.CharField(max_length=256, unique=True)
     slug = models.SlugField("Путь", max_length=50, unique=True)
 
+    class Meta:
+        abstract = True
+
+
+class EntryModel(models.Model):
+    pub_date = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+    text = models.TextField(
+        'Текст',
+    )
+
     def __str__(self):
-        return f'{self.name}'
+        return self.text
+
+    class Meta:
+        abstract = True
+        ordering = ('-pub_date',)
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=256, unique=True)
-    slug = models.SlugField("Путь", max_length=50, unique=True)
+class Genre(SortModel):
+    pass
 
-    def __str__(self):
-        return f'{self.name}'
+
+class Category(SortModel):
+    pass
 
 
 class Title(models.Model, ValidateYearMixin):
@@ -105,10 +123,9 @@ class GenreTitle(models.Model):
         return f'{self.genre} {self.title}'
 
 
-class Review(models.Model):
+class Review(EntryModel):
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
-        null=True
     )
     title = models.ForeignKey(
         Title,
@@ -120,14 +137,7 @@ class Review(models.Model):
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='review_authors'
-    )
-    pub_date = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True,
-    )
-    text = models.TextField(
-        'Текст',
+        related_name='reviews'
     )
 
     class Meta:
@@ -141,7 +151,7 @@ class Review(models.Model):
         return self.text[:15]
 
 
-class Comment(models.Model):
+class Comment(EntryModel):
     review = models.ForeignKey(
         Review,
         verbose_name='Отзыв',
@@ -152,12 +162,5 @@ class Comment(models.Model):
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='comment_authors'
-    )
-    pub_date = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True,
-    )
-    text = models.TextField(
-        'Текст',
+        related_name='comments'
     )
