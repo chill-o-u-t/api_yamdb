@@ -8,6 +8,7 @@ from django.db import models
 
 
 class ValidateYearMixin:
+
     def validate_year(self, value):
         year_now = datetime.datetime.now().year
         if value:
