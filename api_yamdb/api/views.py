@@ -1,4 +1,5 @@
-from django.db.models import Avg, Q
+from django.db import IntegrityError
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils.crypto import get_random_string
@@ -59,24 +60,16 @@ class ListDestroyCreateViewSet(
 def signup(request):
     serializer = AuthSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    if User.objects.filter(
-        (
-            Q(email=serializer.validated_data.get('email'))
-            | Q(username=serializer.validated_data.get('username'))
-        )
-        & ~Q(
+    try:
+        user, _ = User.objects.get_or_create(
             email=serializer.validated_data.get('email'),
-            username=serializer.validated_data.get('username')
+            username=serializer.validated_data.get('username'),
         )
-    ).exists():
+    except IntegrityError:
         return Response(
             {'username does not match email'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    user, _ = User.objects.get_or_create(
-        email=serializer.validated_data.get('email'),
-        username=serializer.validated_data.get('username'),
-    )
     confirmation_code = get_random_string(length=6)
     user.confirmation_code = confirmation_code
     user.save()
