@@ -40,9 +40,9 @@ from .serializers import (
     TokenSerializer
 )
 from .permissions import (
-    AuthorOrStaffPermission,
-    AdminPermission,
-    AdminOrReadOnlyPermission
+    AuthorOrStaffNotSafeMethods,
+    Admin,
+    AdminOrReadOnly
 )
 
 
@@ -52,7 +52,10 @@ class ListDestroyCreateViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    pass
+    permission_classes = (AdminOrReadOnly,)
+    lookup_field = 'slug'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
 
 @api_view(['POST'])
@@ -73,7 +76,6 @@ def signup(request):
     confirmation_code = get_random_string(length=6)
     user.confirmation_code = confirmation_code
     user.save()
-    # print(user.confirmation_code)
     send_mail(user.email, user.confirmation_code)
     return Response(
         serializer.data,
@@ -109,7 +111,7 @@ def get_token(request):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = (AdminPermission,)
+    permission_classes = (Admin,)
     serializer_class = UserSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -140,7 +142,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (
-        AuthorOrStaffPermission,
+        AuthorOrStaffNotSafeMethods,
         IsAuthenticatedOrReadOnly
     )
     pagination_class = LimitOffsetPagination
@@ -164,7 +166,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (
-        AuthorOrStaffPermission,
+        AuthorOrStaffNotSafeMethods,
         IsAuthenticatedOrReadOnly
     )
 
@@ -186,24 +188,16 @@ class CommentViewSet(viewsets.ModelViewSet):
 class GenreViewSet(ListDestroyCreateViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
-    lookup_field = 'slug'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
 
 
 class CategoryViewSet(ListDestroyCreateViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
-    lookup_field = 'slug'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(rating=Avg('reviews__score'))
-    permission_classes = (AdminOrReadOnlyPermission,)
+    permission_classes = (AdminOrReadOnly,)
     serializer_class = TitlePostSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = FilterForTitle
