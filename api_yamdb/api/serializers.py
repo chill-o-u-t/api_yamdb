@@ -1,4 +1,3 @@
-import datetime
 import re
 
 from rest_framework import serializers
@@ -11,6 +10,7 @@ from reviews.models import (
     Category,
     Title,
     User,
+    ValidateYear
 )
 
 
@@ -85,7 +85,7 @@ class GenreSerializer(serializers.ModelSerializer):
         exclude = ('id',)
 
 
-class TitlePostSerializer(serializers.ModelSerializer):
+class TitlePostSerializer(ValidateYear, serializers.ModelSerializer):
     genre = SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(), many=True
@@ -95,15 +95,6 @@ class TitlePostSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all()
     )
     rating = serializers.IntegerField(read_only=True)
-
-    def validate_year(self, data):
-        year_now = datetime.datetime.now().year
-        if data:
-            if data > year_now:
-                raise serializers.ValidationError({
-                    'year': "You can't add titles that are not release yet",
-                })
-        return super(TitlePostSerializer, self).validate(data)
 
     class Meta:
         fields = (
@@ -120,9 +111,11 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True, read_only=True)
-    category = CategorySerializer(read_only=True)
-    rating = serializers.IntegerField(read_only=True)
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+    rating = serializers.IntegerField()
+    read_only_fields = ('id', 'name', 'year', 'rating', 'description',
+                        'category', 'genre')
 
     class Meta:
         fields = (
