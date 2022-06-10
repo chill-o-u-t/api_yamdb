@@ -1,16 +1,18 @@
 from rest_framework import permissions
 
 
-class AuthorOrStaffNotSafeMethods(permissions.BasePermission):
+class ReadOrAuthorAndStaff(permissions.BasePermission):
     """ Редактирование для автора, либо для стафа. """
 
     def has_object_permission(self, request, view, obj):
         if request.method not in permissions.SAFE_METHODS:
             return (
                 request.user.is_authenticated
-                and obj.author == request.user
-                or request.user.is_admin
-                or request.user.is_moderator
+                and (
+                    obj.author == request.user
+                    or request.user.is_admin
+                    or request.user.is_moderator
+                )
             )
         return True
 

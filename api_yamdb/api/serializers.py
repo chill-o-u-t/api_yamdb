@@ -90,15 +90,13 @@ class TitlePostSerializer(ValidateYearMixin, serializers.ModelSerializer):
             'rating'
         )
         model = Title
-        read_only_fields = ('id', 'rating')
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
     rating = serializers.IntegerField()
-    read_only_fields = ('id', 'name', 'year', 'rating', 'description',
-                        'category', 'genre')
+    read_only_fields = '__all__'
 
     class Meta:
         fields = (

@@ -40,13 +40,13 @@ from .serializers import (
     TokenSerializer
 )
 from .permissions import (
-    AuthorOrStaffNotSafeMethods,
+    ReadOrAuthorAndStaff,
     Admin,
     AdminOrReadOnly
 )
 
 
-class ListDestroyCreateViewSet(
+class ListDestroyCreateGenreCategoryViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
@@ -125,24 +125,23 @@ class UserViewSet(viewsets.ModelViewSet):
             url_name='me'
             )
     def me(self, request):
-        instance = get_object_or_404(User, username=request.user.username)
         if self.request.method == 'PATCH':
             serializer = UserSerializer(
-                instance,
+                request.user,
                 data=request.data,
                 partial=True
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save(role=instance.role)
+            serializer.save(role=request.user.role)
             return Response(serializer.data)
-        serializer = UserSerializer(instance, partial=True)
+        serializer = UserSerializer(request.user, partial=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (
-        AuthorOrStaffNotSafeMethods,
+        ReadOrAuthorAndStaff,
         IsAuthenticatedOrReadOnly
     )
     pagination_class = LimitOffsetPagination
@@ -166,7 +165,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (
-        AuthorOrStaffNotSafeMethods,
+        ReadOrAuthorAndStaff,
         IsAuthenticatedOrReadOnly
     )
 
@@ -185,12 +184,12 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-class GenreViewSet(ListDestroyCreateViewSet):
+class GenreViewSet(ListDestroyCreateGenreCategoryViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
-class CategoryViewSet(ListDestroyCreateViewSet):
+class CategoryViewSet(ListDestroyCreateGenreCategoryViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 

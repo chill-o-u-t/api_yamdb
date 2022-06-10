@@ -6,16 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
-
-class ValidateYearMixin:
-    def validate_year(self, value):
-        year_now = datetime.datetime.now().year
-        if value:
-            if value > year_now:
-                raise ValidationError({
-                    'year': f"You can't add year {value} later then current"
-                })
-        return value
+from api_yamdb.reviews.utils import get_year
 
 
 class UsernameValidateMixin:
@@ -34,13 +25,27 @@ class User(AbstractUser, UsernameValidateMixin):
 
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
     role = models.CharField(
-        max_length=8,
+        max_length=len(max(ROLES)),
         choices=ROLES,
         default=USER
     )
-    bio = models.TextField(blank=True, null=True)
+    bio = models.TextField(
+        blank=True,
+        null=True,
+        max_length=150,
+    )
+    first_name = models.TextField(
+        blank=True,
+        null=True,
+        max_length=150,
+    )
+    last_name = models.TextField(
+        blank=True,
+        null=True,
+        max_length=150,
+    )
     email = models.EmailField(
-        max_length=50,
+        max_length=150,
         unique=True,
         blank=False,
         null=False
@@ -69,6 +74,7 @@ class SortModel(models.Model):
     slug = models.SlugField("Путь", max_length=50, unique=True)
 
     class Meta:
+        ordering = ('-name',)
         abstract = True
 
 
@@ -82,7 +88,7 @@ class EntryModel(models.Model):
     )
 
     def __str__(self):
-        return self.text
+        return self.text[:30]
 
     class Meta:
         abstract = True
@@ -97,9 +103,12 @@ class Category(SortModel):
     pass
 
 
-class Title(models.Model, ValidateYearMixin):
-    name = models.CharField('Название', max_length=150)
-    year = models.IntegerField('Год выхода')
+class Title(models.Model):
+    name = models.TextField('Название')
+    year = models.IntegerField(
+        'Год выхода',
+        validators=[MaxValueValidator(get_year())]
+    )
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(
         Genre,
@@ -113,6 +122,9 @@ class Title(models.Model, ValidateYearMixin):
         on_delete=models.PROTECT,
         related_name='categorys',
     )
+
+    class Meta:
+        ordering = ('-year',)
 
 
 class GenreTitle(models.Model):
@@ -140,15 +152,12 @@ class Review(EntryModel):
         related_name='reviews'
     )
 
-    class Meta:
+    class Meta(EntryModel.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=("title", "author"), name="unique_title_author"
             )
         ]
-
-    def __str__(self):
-        return self.text[:15]
 
 
 class Comment(EntryModel):
