@@ -93,7 +93,7 @@ class EntryModel(models.Model):
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='%(class)s'
+        related_name='%(class)ss'
     )
 
     def __str__(self):
@@ -133,7 +133,7 @@ class Title(models.Model):
     )
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('name', 'year')
 
 
 class GenreTitle(models.Model):

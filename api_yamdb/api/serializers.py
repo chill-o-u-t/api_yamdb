@@ -1,3 +1,7 @@
+import datetime as dt
+
+from django.core.validators import MaxValueValidator
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -10,6 +14,7 @@ from reviews.models import (
     User,
     UsernameValidateMixin,
 )
+from reviews.utils import get_year
 
 
 class AuthSerializer(serializers.Serializer, UsernameValidateMixin):
@@ -75,6 +80,12 @@ class TitlePostSerializer(serializers.ModelSerializer):
     category = SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
+    )
+    year = serializers.IntegerField(
+        validators=(MaxValueValidator(
+            timezone.now().year,
+            message='Нельзя добавлять произведения из будущего!'),
+        )
     )
 
     class Meta:
