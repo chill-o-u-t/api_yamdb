@@ -9,7 +9,6 @@ from reviews.models import (
     Title,
     User,
     UsernameValidateMixin,
-    ValidateYearMixin
 )
 
 
@@ -68,7 +67,7 @@ class GenreSerializer(serializers.ModelSerializer):
         exclude = ('id',)
 
 
-class TitlePostSerializer(ValidateYearMixin, serializers.ModelSerializer):
+class TitlePostSerializer(serializers.ModelSerializer):
     genre = SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(), many=True

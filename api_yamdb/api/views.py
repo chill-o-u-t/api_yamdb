@@ -70,12 +70,16 @@ def signup(request):
         )
     except IntegrityError:
         return Response(
-            {'username does not match email'},
+            {'Ошибка аутентификации':
+                'Введенный вами email или username уже используется. '
+                'Если вы являетесь обладателем этого аккаунта, проверьте '
+                'правильность введенных данных.'
+             },
             status=status.HTTP_400_BAD_REQUEST
         )
-    confirmation_code = get_random_string(length=6)
-    user.confirmation_code = confirmation_code
+    user.confirmation_code = get_random_string(length=6)
     user.save()
+    # print(user.confirmation_code)
     send_mail(user.email, user.confirmation_code)
     return Response(
         serializer.data,
@@ -97,7 +101,9 @@ def get_token(request):
         != serializer.validated_data.get('confirmation_code')
     ):
         return Response(
-            {'invalid confirmation code'},
+            {'Ошибка получения токена':
+                'Неверный код подтверждения'
+             },
             status=status.HTTP_400_BAD_REQUEST
         )
     user.confirmation_code = ''
