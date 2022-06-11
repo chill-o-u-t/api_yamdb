@@ -11,9 +11,13 @@ from .utils import get_year
 class UsernameValidateMixin:
     def validate_username(self, value):
         if value == 'me':
-            raise ValidationError('ограниченное или недопустимое имя пользователя')
+            raise ValidationError(
+                'ограниченное или недопустимое имя пользователя'
+            )
         if not re.match(r'[\w.@+-@./+-]+', value):
-            raise ValidationError('ограниченные символы в имени пользователя')
+            raise ValidationError(
+                'ограниченные символы в имени пользователя'
+            )
         return value
 
 
@@ -163,4 +167,3 @@ class Comment(EntryModel):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-
