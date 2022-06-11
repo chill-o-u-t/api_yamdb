@@ -1,4 +1,3 @@
-import datetime
 import re
 
 from django.contrib.auth.models import AbstractUser
@@ -6,15 +5,15 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from reviews.utils import get_year
+from .utils import get_year
 
 
 class UsernameValidateMixin:
     def validate_username(self, value):
         if value == 'me':
-            raise ValidationError('restricted or invalid name')
+            raise ValidationError('ограниченное или недопустимое имя пользователя')
         if not re.match(r'[\w.@+-@./+-]+', value):
-            raise ValidationError('restricted symbols in username')
+            raise ValidationError('ограниченные символы в имени пользователя')
         return value
 
 
@@ -86,6 +85,12 @@ class EntryModel(models.Model):
     text = models.TextField(
         'Текст',
     )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name='%(class)s'
+    )
 
     def __str__(self):
         return self.text[:30]
@@ -131,9 +136,6 @@ class GenreTitle(models.Model):
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return f'{self.genre} {self.title}'
-
 
 class Review(EntryModel):
     score = models.IntegerField(
@@ -142,12 +144,6 @@ class Review(EntryModel):
     title = models.ForeignKey(
         Title,
         verbose_name='Название',
-        on_delete=models.CASCADE,
-        related_name='reviews'
-    )
-    author = models.ForeignKey(
-        User,
-        verbose_name='Автор',
         on_delete=models.CASCADE,
         related_name='reviews'
     )
@@ -167,9 +163,4 @@ class Comment(EntryModel):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-    author = models.ForeignKey(
-        User,
-        verbose_name='Автор',
-        on_delete=models.CASCADE,
-        related_name='comments'
-    )
+
