@@ -1,5 +1,3 @@
-import datetime as dt
-
 from django.core.validators import MaxValueValidator
 from django.utils import timezone
 from rest_framework import serializers
@@ -14,7 +12,6 @@ from reviews.models import (
     User,
     UsernameValidateMixin,
 )
-from reviews.utils import get_year
 
 
 class AuthSerializer(serializers.Serializer, UsernameValidateMixin):
