@@ -89,6 +89,8 @@ class TitlePostSerializer(serializers.ModelSerializer):
             'rating'
         )
         model = Title
+        # в redoc есть поле rating:
+        # rating integer (Рейтинг на основе отзывов, если отзывов нет — `None`)
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
