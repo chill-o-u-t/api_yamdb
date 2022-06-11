@@ -29,7 +29,7 @@ class User(AbstractUser, UsernameValidateMixin):
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
 
     role = models.CharField(
-        max_length=9,
+        max_length=max([len(x[0]) for x in ROLES]),
         choices=ROLES,
         default=USER
     )
@@ -70,7 +70,6 @@ class User(AbstractUser, UsernameValidateMixin):
     @property
     def is_moderator(self):
         return self.role == self.MODERATOR
-
 
 
 class SortModel(models.Model):
@@ -134,7 +133,7 @@ class Title(models.Model):
     )
 
     class Meta:
-        ordering = ('-year',)
+        ordering = ('name',)
 
 
 class GenreTitle(models.Model):
