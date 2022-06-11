@@ -101,3 +101,8 @@ api_yamdb\reviews\management\commands\fill_db.py
 ```
 python3 manage.py fill_db
 ```
+
+## Авторы проекта:
+- **Максим Юрьевич Близнюк, bmu0**
+- **Кажура Ксения Геннадьевна, kazhurka**
+- **Морозов Иван Денисович, chill-o-u-t**
