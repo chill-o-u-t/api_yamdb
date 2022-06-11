@@ -76,7 +76,6 @@ class TitlePostSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Category.objects.all()
     )
-    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         fields = (
@@ -86,11 +85,8 @@ class TitlePostSerializer(serializers.ModelSerializer):
             'description',
             'genre',
             'category',
-            'rating'
         )
         model = Title
-        # в redoc есть поле rating:
-        # rating integer (Рейтинг на основе отзывов, если отзывов нет — `None`)
 
 
 class TitleGetSerializer(serializers.ModelSerializer):

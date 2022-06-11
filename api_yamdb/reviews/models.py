@@ -27,15 +27,15 @@ class User(AbstractUser, UsernameValidateMixin):
     USER = "user"
 
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
+
     role = models.CharField(
-        max_length=len(max(ROLES)),
+        max_length=9,
         choices=ROLES,
         default=USER
     )
     bio = models.TextField(
         blank=True,
         null=True,
-        max_length=150,
     )
     first_name = models.TextField(
         blank=True,
@@ -48,7 +48,7 @@ class User(AbstractUser, UsernameValidateMixin):
         max_length=150,
     )
     email = models.EmailField(
-        max_length=150,
+        max_length=254,
         unique=True,
         blank=False,
         null=False
@@ -70,6 +70,7 @@ class User(AbstractUser, UsernameValidateMixin):
     @property
     def is_moderator(self):
         return self.role == self.MODERATOR
+
 
 
 class SortModel(models.Model):
@@ -129,7 +130,7 @@ class Title(models.Model):
         Category,
         verbose_name='Категория',
         on_delete=models.PROTECT,
-        related_name='categorys',
+        related_name='titles',
     )
 
     class Meta:
