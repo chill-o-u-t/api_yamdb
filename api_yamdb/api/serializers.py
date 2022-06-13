@@ -1,5 +1,4 @@
 from django.core.validators import MaxValueValidator
-from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -12,6 +11,7 @@ from reviews.models import (
     User,
     UsernameValidateMixin,
 )
+from reviews.utils import get_year
 
 
 class AuthSerializer(serializers.Serializer, UsernameValidateMixin):
@@ -80,7 +80,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
     )
     year = serializers.IntegerField(
         validators=(MaxValueValidator(
-            timezone.now().year,
+            get_year(),
             message='Нельзя добавлять произведения из будущего!'),
         )
     )

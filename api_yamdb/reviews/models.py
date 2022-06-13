@@ -1,7 +1,7 @@
 import re
 
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -14,10 +14,6 @@ class UsernameValidateMixin:
             raise ValidationError(
                 'ограниченное или недопустимое имя пользователя'
             )
-        if not re.match(r'[\w.@+-@./+-]+', value):
-            raise ValidationError(
-                'ограниченные символы в имени пользователя'
-            )
         return value
 
 
@@ -29,9 +25,16 @@ class User(AbstractUser, UsernameValidateMixin):
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
 
     role = models.CharField(
-        max_length=max([len(x[0]) for x in ROLES]),
+        max_length=max(len(role[0]) for role in ROLES),
         choices=ROLES,
         default=USER
+    )
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        validators=[RegexValidator(
+            regex=r'^[\w.@+-]+$',
+            message='Ошибка валидации поля slug')]
     )
     bio = models.TextField(
         blank=True,
@@ -79,6 +82,9 @@ class SortModel(models.Model):
     class Meta:
         ordering = ('-name',)
         abstract = True
+
+    def __str__(self):
+        return self.name[:15]
 
 
 class EntryModel(models.Model):
