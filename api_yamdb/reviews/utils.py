@@ -16,5 +16,3 @@ def setup_periodic_tasks(sender, **kwargs):
 @app.task
 def get_year():
     return datetime.now().year
-
-
