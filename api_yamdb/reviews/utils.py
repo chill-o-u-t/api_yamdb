@@ -6,4 +6,4 @@ def get_year():
     return datetime.now().year
 
 
-SYMBOLS = re.compile('[\w.@+-@./+-]+')
+SYMBOLS = re.compile(r'[\w.@+-@./+-]+')

@@ -7,7 +7,6 @@ from django.core.validators import (
 )
 from django.core.exceptions import ValidationError
 from django.db import models
-
 from .utils import get_year, SYMBOLS
 
 
