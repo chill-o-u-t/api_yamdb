@@ -7,4 +7,3 @@ def get_year():
 
 
 SYMBOLS = re.compile('[\w.@+-@./+-]+')
-
