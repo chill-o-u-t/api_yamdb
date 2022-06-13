@@ -7,7 +7,7 @@ from django.core.validators import (
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from .utils import get_year
+from .utils import get_year, SYMBOLS
 
 
 class UsernameValidateMixin:
@@ -27,7 +27,7 @@ class User(AbstractUser, UsernameValidateMixin):
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
 
     role = models.CharField(
-        max_length=max(len(role[0]) for role in ROLES),
+        max_length=max(len(role) for role,_ in ROLES),
         choices=ROLES,
         default=USER
     )
@@ -35,7 +35,7 @@ class User(AbstractUser, UsernameValidateMixin):
         max_length=150,
         unique=True,
         validators=[RegexValidator(
-            regex=r'^[\w.@+-]+$',
+            regex=SYMBOLS,
             message='Ошибка валидации поля slug')]
     )
     bio = models.TextField(
@@ -124,7 +124,7 @@ class Title(models.Model):
     name = models.TextField('Название')
     year = models.IntegerField(
         'Год выхода',
-        validators=[MaxValueValidator(get_year())]
+        validators=[MaxValueValidator(get_year.__getitem__)]
     )
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(

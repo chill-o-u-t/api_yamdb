@@ -1,4 +1,4 @@
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, RegexValidator
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -15,7 +15,14 @@ from reviews.utils import get_year
 
 
 class AuthSerializer(serializers.Serializer, UsernameValidateMixin):
-    username = serializers.CharField(max_length=150)
+    username = serializers.CharField(
+        max_length=150,
+        validators=[
+            RegexValidator(
+                regex=r'^[\w.@+-]+$',
+                message='Ошибка валидации поля slug')
+            ]
+    )
     email = serializers.EmailField(max_length=254)
 
 
@@ -80,7 +87,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
     )
     year = serializers.IntegerField(
         validators=(MaxValueValidator(
-            get_year(),
+            get_year.__getitem__,
             message='Нельзя добавлять произведения из будущего!'),
         )
     )

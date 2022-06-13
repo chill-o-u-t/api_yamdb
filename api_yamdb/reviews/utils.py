@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from celery import Celery
 from celery.schedules import crontab
@@ -16,3 +17,8 @@ def setup_periodic_tasks(sender, **kwargs):
 @app.task
 def get_year():
     return datetime.now().year
+
+
+SYMBOLS = re.compile('[\w.@+-@./+-]+')
+
+print(SYMBOLS)
