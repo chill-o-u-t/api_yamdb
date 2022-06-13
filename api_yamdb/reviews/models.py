@@ -1,8 +1,9 @@
+import re
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
-    RegexValidator
 )
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -15,6 +16,10 @@ class UsernameValidateMixin:
         if value == 'me':
             raise ValidationError(
                 'ограниченное или недопустимое имя пользователя'
+            )
+        if not re.match(SYMBOLS, value):
+            raise ValidationError(
+                'недопустимые символы в имени пользователя'
             )
         return value
 
@@ -34,9 +39,6 @@ class User(AbstractUser, UsernameValidateMixin):
     username = models.CharField(
         max_length=150,
         unique=True,
-        validators=[RegexValidator(
-            regex=SYMBOLS,
-            message='Ошибка валидации поля slug')]
     )
     bio = models.TextField(
         blank=True,
@@ -124,7 +126,7 @@ class Title(models.Model):
     name = models.TextField('Название')
     year = models.IntegerField(
         'Год выхода',
-        validators=[MaxValueValidator(get_year.__getitem__)]
+        validators=[MaxValueValidator(get_year)]
     )
     description = models.TextField('Описание', blank=True)
     genre = models.ManyToManyField(

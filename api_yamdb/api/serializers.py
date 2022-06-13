@@ -17,11 +17,6 @@ from reviews.utils import get_year
 class AuthSerializer(serializers.Serializer, UsernameValidateMixin):
     username = serializers.CharField(
         max_length=150,
-        validators=[
-            RegexValidator(
-                regex=r'^[\w.@+-]+$',
-                message='Ошибка валидации поля slug')
-            ]
     )
     email = serializers.EmailField(max_length=254)
 
@@ -87,7 +82,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
     )
     year = serializers.IntegerField(
         validators=(MaxValueValidator(
-            get_year.__getitem__,
+            get_year,
             message='Нельзя добавлять произведения из будущего!'),
         )
     )
