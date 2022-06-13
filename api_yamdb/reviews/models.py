@@ -32,7 +32,7 @@ class User(AbstractUser, UsernameValidateMixin):
     ROLES = ((ADMIN, 'admin'), (MODERATOR, 'moderator'), (USER, 'user'))
 
     role = models.CharField(
-        max_length=max(len(role) for role,_ in ROLES),
+        max_length=max(len(role) for role, _ in ROLES),
         choices=ROLES,
         default=USER
     )

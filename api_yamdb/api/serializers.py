@@ -1,4 +1,4 @@
-from django.core.validators import MaxValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
